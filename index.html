@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>초등교직논술 AI 모의고사</title>
+  <title>초등교직논술 모의고사</title>
   
   <!-- React 및 ReactDOM CDN -->
   <script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
@@ -22,72 +22,101 @@
   <script type="text/babel">
     const { useState, useEffect } = React;
 
-    // --- [모의 데이터 (Mock Data)] ---
-    // API 통신 없이 즉시 렌더링하기 위한 사전 제작된 모의고사 데이터입니다.
-    const MOCK_EXAM_DATA = {
-      "title": "2022 개정 교육과정과 학생 주도성 관련 모의고사",
-      "scenario": [
-        "김 교사: 2022 개정 교육과정에서는 '학생 주도성'을 특히 강조하고 있어요. 우리 학교 교육과정에도 이를 적극적으로 반영해야 할 것 같습니다.",
-        "박 교사: 맞아요. 학생들이 스스로 학습 목표를 설정하고, 학습 과정에 참여하며, 결과를 성찰하는 과정이 중요하죠. 이를 위해 교과 수업에서 어떤 변화를 주어야 할까요?",
-        "최 교사: 저는 평가 방식의 변화도 필수적이라고 봐요. 학생의 성장을 돕는 과정 중심 평가가 제대로 이루어져야 학생 주도성도 길러질 수 있다고 생각합니다."
+    // --- [동적 모의고사 출제 로직] ---
+    const generateMockExam = (topic) => ({
+      title: `[${topic}] 관련 초등교직논술 모의고사`,
+      scenario: [
+        `김 교사: 최근 학교 현장에서 '${topic}'에 대한 중요성이 점차 커지고 있습니다. 내년도 우리 학교 교육과정 운영 계획에도 이를 적극적으로 반영해야 할 것 같아요.`,
+        `박 교사: 맞습니다. 특히 교과 수업과 창의적 체험활동을 연계하여 학생들이 '${topic}' 역량을 내면화할 수 있도록 돕는 실질적인 방안을 고민해야 합니다.`,
+        `최 교사: 교수·학습 측면뿐만 아니라, 학급 경영 측면에서도 이를 지원할 수 있는 긍정적인 학급 분위기 조성과 학부모와의 긴밀한 소통 및 협력이 필수적이라고 생각합니다.`
       ],
-      "questions": [
-        {"id": 1, "task": "2022 개정 교육과정에서 강조하는 '학생 주도성'의 개념과 교사의 역할 2가지를 논하시오.", "score": 4},
-        {"id": 2, "task": "학생 주도성을 기르기 위한 교수·학습 방안 2가지를 제시하시오.", "score": 4},
-        {"id": 3, "task": "과정 중심 평가가 학생 주도성 함양에 미치는 긍정적 영향 2가지를 설명하시오.", "score": 4},
-        {"id": 4, "task": "학급 내에서 학생 주도성을 저해하는 요인 1가지와 그 해결 방안 1가지를 논하시오.", "score": 3}
+      questions: [
+        {id: 1, task: `'${topic}' 교육이 가지는 긍정적 효과 2가지와 교사에게 요구되는 역할 2가지를 논하시오.`, score: 4},
+        {id: 2, task: `교과 수업과 창의적 체험활동을 연계한 '${topic}' 지도 방안을 각각 1가지씩 제시하시오.`, score: 4},
+        {id: 3, task: `학급 경영 측면에서 '${topic}' 역량 함양을 돕기 위한 환경 조성 방안 2가지를 논하시오.`, score: 4},
+        {id: 4, task: `이와 관련하여 학부모 상담 시 교사가 유의해야 할 점 3가지를 제시하시오.`, score: 3}
       ],
-      "formatScore": 5
-    };
+      formatScore: 5
+    });
 
-    const MOCK_RESULT_DATA = {
-      "totalScore": 17,
-      "contentScore": 13,
-      "formatScore": 4,
-      "contentFeedback": [
-        {
-          "questionId": 1,
-          "task": "학생 주도성의 개념과 교사의 역할",
-          "earnedScore": 3,
-          "maxScore": 4,
-          "missingKeywords": ["조력자", "촉진자"],
-          "comment": "학생 주도성의 개념은 잘 서술하였으나, 교사의 역할을 '안내자'로만 한정하여 구체적인 조력자나 촉진자로서의 역할 서술이 부족하여 감점되었습니다."
-        },
-        {
-          "questionId": 2,
-          "task": "학생 주도성을 기르기 위한 교수·학습 방안",
-          "earnedScore": 4,
-          "maxScore": 4,
-          "missingKeywords": [],
-          "comment": "프로젝트 학습과 학생 참여형 수업을 적절히 제시하여 만점입니다."
-        },
-        {
-          "questionId": 3,
-          "task": "과정 중심 평가가 학생 주도성 함양에 미치는 영향",
-          "earnedScore": 3,
-          "maxScore": 4,
-          "missingKeywords": ["자기 성찰"],
-          "comment": "피드백을 통한 개선은 훌륭하게 언급했으나, 학생 스스로 자신의 학습을 돌아보는 '자기 성찰' 기회 제공 측면이 누락되었습니다."
-        },
-        {
-          "questionId": 4,
-          "task": "학생 주도성 저해 요인과 해결 방안",
-          "earnedScore": 3,
-          "maxScore": 3,
-          "missingKeywords": [],
-          "comment": "교사 중심의 일방적 지시를 저해 요인으로 꼽고, 학급 규칙 제정 시 학생 참여를 보장하는 방안을 매우 타당하게 제시했습니다."
+    // --- [동적 채점 알고리즘 (분량 및 키워드 기반 엄격한 채점)] ---
+    const evaluateAnswer = (answer, topic, examData) => {
+      let contentScore = 0;
+      let formatScore = 0;
+      const cleanAnswer = answer.trim();
+      const length = cleanAnswer.replace(/\s/g, '').length; // 공백 제외 글자수
+
+      // 1. 체계 점수 (총 5점) - 분량에 따라 칼같이 감점
+      if (length < 200) formatScore = 1;
+      else if (length < 500) formatScore = 2;
+      else if (length < 800) formatScore = 3;
+      else if (length < 1000) formatScore = 4;
+      else formatScore = 5;
+
+      // 2. 내용 점수 (총 15점)
+      const contentFeedback = examData.questions.map(q => {
+        let earned = 0;
+        let comment = "";
+        let missing = [];
+
+        if (length < 100) {
+          comment = "답안 내용이 극히 부족하여 해당 논제에 대한 점수를 부여할 수 없습니다.";
+          earned = 0;
+          missing = ["핵심 논점 전면 누락"];
+        } else {
+          // 키워드 언급 여부 확인
+          if (cleanAnswer.includes(topic)) {
+            if (length < 500) {
+              earned = Math.max(1, q.score - 2);
+              comment = `주제('${topic}')에 대한 언급은 있으나, 글자 수가 부족하여 구체적인 논증과 실천 방안 서술이 미흡합니다.`;
+              missing = ["구체적 실천 방안", "교육학적 근거"];
+            } else if (length < 900) {
+              earned = Math.max(2, q.score - 1);
+              comment = `논제 요구사항을 대체로 충족하였으나, 보다 심층적인 교사의 역할과 현장 적용 방안이 추가되면 좋습니다.`;
+            } else {
+              earned = q.score;
+              comment = `주제에 대한 이해도가 높고 요구하는 가지 수를 충족하여 구체적이고 타당하게 서술하였습니다.`;
+            }
+          } else {
+            // 주제어를 아예 적지 않은 경우 (오프토픽 감점)
+            earned = Math.max(0, q.score - 3);
+            comment = `논제의 핵심 키워드인 '${topic}'에 대한 명시적인 언급과 논리적 연결이 부족하여 큰 폭으로 감점되었습니다.`;
+            missing = [topic];
+          }
         }
-      ],
-      "formatFeedback": {
-        "structureComment": "서론-본론-결론의 3단 구성이 명확하게 갖춰져 있으며, 단락 간의 연결이 자연스럽습니다.",
-        "grammarComment": "전반적으로 우수하나, 일부 문장에서 주어와 서술어의 호응이 어색한 부분(예: '교사는 ~할 수 있다'가 아닌 '교사는 ~해야 한다'로 통일)이 있어 1점 감점되었습니다."
-      },
-      "overallReview": "학생 주도성과 2022 개정 교육과정의 핵심을 잘 짚어낸 우수한 답안입니다. 교육학적 전문 용어(촉진자, 자기 성찰 등)를 조금 더 적극적으로 활용한다면 완벽한 논술이 될 것입니다."
+        contentScore += earned;
+        return {
+          questionId: q.id,
+          task: q.task,
+          earnedScore: earned,
+          maxScore: q.score,
+          missingKeywords: missing,
+          comment: comment
+        };
+      });
+
+      return {
+        totalScore: contentScore + formatScore,
+        contentScore,
+        formatScore,
+        contentFeedback,
+        formatFeedback: {
+          structureComment: length > 900 
+            ? "서론-본론-결론의 3단 구성이 명확하며 단락 간의 논리적 연결이 자연스럽습니다." 
+            : "글의 분량이 부족하여 논리적 체계성을 판단하기 어렵거나 구조가 미흡합니다.",
+          grammarComment: length > 900 
+            ? "교직논술에 적합한 어휘 및 문장 호응을 적절하게 사용했습니다." 
+            : "문장 구성이 단조롭거나 논술형 문장에 적합하지 않은 짧은 표현이 다수 있습니다."
+        },
+        overallReview: length > 900 
+          ? "제시된 키워드에 대한 높은 이해도와 훌륭한 교육학적 식견이 돋보이는 우수한 답안입니다." 
+          : `답안 분량(현재 공백 제외 ${length}자)이 절대적으로 부족합니다. 1,100자 내외로 작성하는 연습이 필요합니다.`
+      };
     };
 
     function App() {
-      // --- [상태 관리] ---
       const [status, setStatus] = useState('setup');
+      const [topic, setTopic] = useState('');
       
       const [examData, setExamData] = useState(null);
       const [answer, setAnswer] = useState('');
@@ -97,12 +126,13 @@
       const [isSaved, setIsSaved] = useState(false);
       const [charCount, setCharCount] = useState({ total: 0, noSpaces: 0 });
 
-      // --- [초기 로드 및 자동 저장] ---
+      // 자동 저장 복구
       useEffect(() => {
         const savedDraft = localStorage.getItem('essay_draft');
         if (savedDraft && status === 'setup') setAnswer(savedDraft);
       }, [status]);
 
+      // 글자 수 카운팅 및 자동 저장
       useEffect(() => {
         setCharCount({
           total: answer.length,
@@ -136,32 +166,33 @@
         return () => clearInterval(timer);
       }, [status]);
 
-      // --- [액션 핸들러 (Mock API 호출 에뮬레이션)] ---
-      const handleStartExam = async () => {
+      // 출제 시작
+      const handleStartExam = () => {
+        const targetTopic = topic.trim() || '2022 개정 교육과정'; // 미입력 시 기본값
+        
         setAnswer('');
         localStorage.removeItem('essay_draft');
         setStatus('generating');
         
-        // 자연스러운 UI 경험을 위해 1.5초 대기 효과 추가
         setTimeout(() => {
-          setExamData(MOCK_EXAM_DATA);
+          setExamData(generateMockExam(targetTopic));
           setTimeLeft(3600);
           setStatus('exam');
-        }, 1500);
+        }, 800);
       };
 
-      const handleSubmit = async () => {
+      // 제출 및 채점
+      const handleSubmit = () => {
         if (!answer.trim()) return alert('답안을 작성해주세요.');
-        if (!confirm('답안을 제출하고 채점을 진행하시겠습니까? (현재 데모 버전이므로 작성한 내용과 무관하게 예시 채점 결과가 출력됩니다.)')) return;
+        if (!confirm('답안을 제출하고 채점을 진행하시겠습니까?')) return;
         
         setStatus('grading');
         
-        // 자연스러운 UI 경험을 위해 2초 대기 효과 추가
         setTimeout(() => {
-          setResultData(MOCK_RESULT_DATA);
+          setResultData(evaluateAnswer(answer, topic.trim() || '2022 개정 교육과정', examData));
           setStatus('result');
           localStorage.removeItem('essay_draft');
-        }, 2000);
+        }, 1500);
       };
 
       const formatTime = (seconds) => {
@@ -170,68 +201,74 @@
         return `${m}:${s}`;
       };
 
-      // --- [UI 렌더링] ---
       return (
-        <div className="min-h-screen p-4 flex flex-col items-center">
-          <div className="w-full max-w-5xl space-y-6">
+        <div className="min-h-screen p-4 flex flex-col items-center justify-between">
+          <div className="w-full max-w-5xl space-y-6 flex-grow">
             
             {/* 헤더 */}
-            <header className="bg-white p-6 rounded-xl shadow border border-gray-200">
-              <h1 className="text-2xl font-bold text-blue-700">초등교직논술 AI 모의고사 (데모 버전)</h1>
-              <p className="text-gray-500 mt-1">API 연결 없이 즉시 체험 가능한 오프라인 모드입니다.</p>
+            <header className="bg-white p-6 rounded-xl shadow border border-gray-200 text-center">
+              <h1 className="text-3xl font-extrabold text-blue-700 tracking-tight">초등교직논술 모의고사</h1>
             </header>
 
             {/* 설정 화면 */}
             {status === 'setup' && (
-              <div className="bg-white p-12 rounded-xl shadow border border-gray-200 flex flex-col items-center text-center gap-6">
-                <div className="bg-blue-50 p-6 rounded-lg w-full">
-                  <h3 className="text-lg font-bold text-blue-800 mb-2">📌 체험 안내</h3>
-                  <p className="text-blue-600">이 버전은 API 키 입력 없이 UI/UX 흐름을 테스트하기 위한 <strong>미리보기(Mock) 버전</strong>입니다. <br/>아래 버튼을 누르면 고정된 모의고사 문제가 바로 출제됩니다.</p>
+              <div className="bg-white p-16 rounded-xl shadow border border-gray-200 flex flex-col items-center text-center gap-8 mt-10">
+                <div className="w-full max-w-lg">
+                  <label className="block text-lg font-bold text-gray-700 mb-3 text-left">핵심 키워드 입력</label>
+                  <input 
+                    type="text" 
+                    value={topic} 
+                    onChange={(e) => setTopic(e.target.value)}
+                    placeholder="예: 과정 중심 평가, 늘봄학교, 에듀테크 등" 
+                    className="w-full p-4 border-2 border-gray-200 rounded-xl focus:ring-4 focus:ring-blue-100 focus:border-blue-500 outline-none text-lg transition-all"
+                    onKeyDown={(e) => e.key === 'Enter' && handleStartExam()}
+                  />
+                  <p className="text-sm text-gray-400 mt-2 text-left">* 키워드에 맞춘 모의고사 지문이 즉시 출제됩니다.</p>
                 </div>
                 <button 
                   onClick={handleStartExam}
-                  className="bg-blue-600 hover:bg-blue-700 text-white font-bold text-lg py-5 px-12 rounded-full shadow-lg transition-transform transform hover:scale-105"
+                  className="bg-blue-600 hover:bg-blue-700 text-white font-bold text-xl py-5 px-16 rounded-full shadow-xl transition-transform transform hover:-translate-y-1"
                 >
-                  데모 모의고사 시작하기
+                  모의고사 시작하기
                 </button>
               </div>
             )}
 
             {/* 로딩 화면 */}
             {(status === 'generating' || status === 'grading') && (
-              <div className="bg-white p-12 rounded-xl shadow text-center border border-gray-200">
-                <div className="text-xl font-bold animate-pulse text-blue-600">
-                  {status === 'generating' ? '문제를 불러오고 있습니다...' : '답안을 꼼꼼하게 채점 중입니다...'}
+              <div className="bg-white p-16 rounded-xl shadow text-center border border-gray-200 mt-10">
+                <div className="text-2xl font-bold animate-pulse text-blue-600">
+                  {status === 'generating' ? '입력하신 키워드로 문제를 생성 중입니다...' : '답안을 꼼꼼하게 채점 중입니다...'}
                 </div>
               </div>
             )}
 
             {/* 시험 화면 */}
             {status === 'exam' && examData && (
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-4">
                 {/* 지문 영역 */}
                 <div className="bg-white p-6 rounded-xl shadow border border-gray-200 h-[800px] overflow-y-auto">
                   <h2 className="text-xl font-bold mb-4">{examData.title}</h2>
-                  <div className="bg-gray-100 p-4 rounded-lg mb-6 space-y-3">
+                  <div className="bg-gray-100 p-5 rounded-xl mb-6 space-y-4">
                     {examData.scenario.map((line, idx) => (
-                      <p key={idx} className="leading-relaxed">{line}</p>
+                      <p key={idx} className="leading-relaxed text-gray-800 text-lg">{line}</p>
                     ))}
                   </div>
-                  <h3 className="font-bold text-lg mb-3">작성 조건 및 배점 (총 15점)</h3>
-                  <ul className="list-decimal pl-5 space-y-2">
+                  <h3 className="font-bold text-lg mb-4 bg-blue-50 text-blue-800 p-3 rounded-lg">작성 조건 및 배점 (총 15점)</h3>
+                  <ul className="list-decimal pl-6 space-y-3 font-medium text-gray-700">
                     {examData.questions.map((q) => (
-                      <li key={q.id}>{q.task} [{q.score}점]</li>
+                      <li key={q.id} className="leading-relaxed">{q.task} <span className="text-blue-600 font-bold">[{q.score}점]</span></li>
                     ))}
                   </ul>
                 </div>
 
                 {/* 답안 작성 에디터 */}
                 <div className="bg-white p-6 rounded-xl shadow border border-gray-200 flex flex-col h-[800px]">
-                  <div className="flex justify-between items-center bg-gray-100 p-3 rounded-lg mb-4">
-                    <div className={`text-xl font-bold ${timeLeft < 600 ? 'text-red-600' : 'text-blue-600'}`}>
+                  <div className="flex justify-between items-center bg-gray-100 p-4 rounded-xl mb-4">
+                    <div className={`text-2xl font-bold ${timeLeft < 600 ? 'text-red-600 animate-pulse' : 'text-blue-600'}`}>
                       남은 시간: {formatTime(timeLeft)}
                     </div>
-                    <div className="text-sm text-gray-500 font-medium">
+                    <div className="text-sm text-gray-500 font-medium bg-white px-3 py-1 rounded-full shadow-sm">
                       {isSaved ? '✅ 임시 저장됨' : '작성 중...'}
                     </div>
                   </div>
@@ -240,17 +277,17 @@
                     value={answer}
                     onChange={(e) => setAnswer(e.target.value)}
                     placeholder="여기에 답안을 작성하세요. (권장: 1,100 ~ 1,200자)"
-                    className="flex-1 w-full p-4 border rounded-lg resize-none focus:ring-2 focus:ring-blue-500 outline-none text-lg leading-relaxed mb-4"
+                    className="flex-1 w-full p-5 border-2 border-gray-200 rounded-xl resize-none focus:ring-4 focus:ring-blue-100 focus:border-blue-400 outline-none text-lg leading-loose mb-4 transition-all"
                     spellCheck={false}
                   />
                   
                   <div className="flex justify-between items-center">
-                    <span className="text-sm text-gray-600 font-medium">
-                      공백 포함: {charCount.total}자 / 공백 제외: {charCount.noSpaces}자
+                    <span className="text-sm text-gray-600 font-bold bg-gray-100 px-4 py-2 rounded-lg">
+                      공백 포함: {charCount.total}자 / 공백 제외: <span className={charCount.noSpaces < 1000 ? "text-red-500" : "text-green-600"}>{charCount.noSpaces}자</span>
                     </span>
                     <button 
                       onClick={handleSubmit}
-                      className="bg-gray-800 hover:bg-black text-white font-bold py-2 px-6 rounded-lg transition"
+                      className="bg-gray-800 hover:bg-black text-white font-bold py-3 px-8 rounded-lg shadow-md transition-colors"
                     >
                       답안 제출하기
                     </button>
@@ -261,48 +298,49 @@
 
             {/* 채점 결과 대시보드 */}
             {status === 'result' && resultData && (
-              <div className="bg-white p-8 rounded-xl shadow border border-gray-200 space-y-8">
-                <div className="text-center border-b pb-6">
-                  <h2 className="text-3xl font-bold text-gray-800">최종 점수: {resultData.totalScore} / 20점</h2>
-                  <p className="text-gray-600 mt-2">{resultData.overallReview}</p>
+              <div className="bg-white p-8 rounded-xl shadow border border-gray-200 space-y-8 mt-4">
+                <div className="text-center border-b pb-8">
+                  <div className="inline-block bg-blue-50 text-blue-700 px-6 py-2 rounded-full font-bold mb-4">채점 완료</div>
+                  <h2 className="text-4xl font-extrabold text-gray-900">최종 점수: {resultData.totalScore} / 20점</h2>
+                  <p className="text-gray-600 mt-4 text-lg font-medium">{resultData.overallReview}</p>
                 </div>
 
                 <div>
-                  <h3 className="text-xl font-bold text-blue-700 mb-4 flex items-center">
+                  <h3 className="text-2xl font-bold text-blue-700 mb-4 flex items-center border-b-2 border-blue-100 pb-2">
                     내용 영역 ({resultData.contentScore} / 15점)
                   </h3>
                   <div className="space-y-4">
                     {resultData.contentFeedback.map((fb) => (
-                      <div key={fb.questionId} className="bg-blue-50 p-4 rounded-lg border-l-4 border-blue-500">
-                        <div className="flex justify-between font-bold mb-2">
-                          <span>{fb.task}</span>
-                          <span>{fb.earnedScore} / {fb.maxScore}점</span>
+                      <div key={fb.questionId} className="bg-blue-50 p-5 rounded-xl border-l-4 border-blue-500 hover:shadow-md transition-shadow">
+                        <div className="flex justify-between font-bold mb-3 text-lg">
+                          <span className="text-gray-800">{fb.task.split(' ')[0]} 관련 논제</span>
+                          <span className="text-blue-700">{fb.earnedScore} / {fb.maxScore}점</span>
                         </div>
                         {fb.missingKeywords && fb.missingKeywords.length > 0 && (
-                          <p className="text-sm text-red-600 mb-1">
+                          <p className="text-sm font-bold text-red-500 mb-2 bg-red-50 inline-block px-2 py-1 rounded">
                             누락 키워드: {fb.missingKeywords.join(', ')}
                           </p>
                         )}
-                        <p className="text-gray-700 text-sm leading-relaxed">{fb.comment}</p>
+                        <p className="text-gray-700 text-base leading-relaxed">{fb.comment}</p>
                       </div>
                     ))}
                   </div>
                 </div>
 
                 <div>
-                  <h3 className="text-xl font-bold text-green-700 mb-4 flex items-center">
+                  <h3 className="text-2xl font-bold text-green-700 mb-4 flex items-center border-b-2 border-green-100 pb-2">
                     체계 영역 ({resultData.formatScore} / 5점)
                   </h3>
-                  <div className="bg-green-50 p-4 rounded-lg border-l-4 border-green-500 space-y-3">
-                    <p className="text-sm text-gray-700"><strong className="text-gray-900">논리적 체계성:</strong> {resultData.formatFeedback.structureComment}</p>
-                    <p className="text-sm text-gray-700"><strong className="text-gray-900">맞춤법 및 어휘:</strong> {resultData.formatFeedback.grammarComment}</p>
+                  <div className="bg-green-50 p-5 rounded-xl border-l-4 border-green-500 space-y-4">
+                    <p className="text-base text-gray-700"><strong className="text-gray-900 block mb-1">논리적 체계성:</strong> {resultData.formatFeedback.structureComment}</p>
+                    <p className="text-base text-gray-700"><strong className="text-gray-900 block mb-1">맞춤법 및 어휘:</strong> {resultData.formatFeedback.grammarComment}</p>
                   </div>
                 </div>
 
-                <div className="text-center pt-4">
+                <div className="text-center pt-8">
                   <button 
-                    onClick={() => { setStatus('setup'); setAnswer(''); setExamData(null); }}
-                    className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-8 rounded-lg transition"
+                    onClick={() => { setStatus('setup'); setAnswer(''); setExamData(null); setTopic(''); }}
+                    className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-4 px-10 rounded-full shadow-lg transition-transform transform hover:-translate-y-1"
                   >
                     메인 화면으로 돌아가기
                   </button>
@@ -311,6 +349,11 @@
             )}
 
           </div>
+          
+          {/* 하단 저작권 표시 */}
+          <footer className="mt-12 mb-4 text-center text-gray-400 text-sm font-medium w-full">
+            &copy; 2026. Made by. 엽쌤
+          </footer>
         </div>
       );
     }
