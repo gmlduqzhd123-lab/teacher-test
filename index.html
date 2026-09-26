@@ -9,7 +9,7 @@
   <script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
   <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
   
-  <!-- Babel (브라우저에서 React JSX를 실행하기 위함) -->
+  <!-- Babel -->
   <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
   
   <!-- Tailwind CSS CDN -->
@@ -17,58 +17,77 @@
 </head>
 <body class="bg-gray-50 text-gray-800 font-sans">
   
-  <!-- React 앱이 렌더링될 루트 DOM -->
   <div id="root"></div>
 
-  <!-- 메인 애플리케이션 코드 -->
   <script type="text/babel">
     const { useState, useEffect } = React;
 
-    // --- [AI 프롬프트 설정] ---
-    const GENERATE_PROMPT = `당신은 초등 임용고시 교직논술 출제 위원장입니다. 
-주어진 주제에 맞춰 3~4명의 교사가 협의하는 대화문과 4개의 하위 논제를 출제하세요.
-반드시 아래 JSON 형식으로만 응답해야 하며, 마크다운(\`\`\`json 등)이나 다른 텍스트는 절대 포함하지 마세요.
-{
-  "title": "모의고사 제목",
-  "scenario": ["김 교사: ...", "박 교사: ...", "최 교사: ..."],
-  "questions": [
-    {"id": 1, "task": "논제 1 내용", "score": 4},
-    {"id": 2, "task": "논제 2 내용", "score": 4},
-    {"id": 3, "task": "논제 3 내용", "score": 4},
-    {"id": 4, "task": "논제 4 내용", "score": 3}
-  ],
-  "formatScore": 5
-}`;
+    // --- [모의 데이터 (Mock Data)] ---
+    // API 통신 없이 즉시 렌더링하기 위한 사전 제작된 모의고사 데이터입니다.
+    const MOCK_EXAM_DATA = {
+      "title": "2022 개정 교육과정과 학생 주도성 관련 모의고사",
+      "scenario": [
+        "김 교사: 2022 개정 교육과정에서는 '학생 주도성'을 특히 강조하고 있어요. 우리 학교 교육과정에도 이를 적극적으로 반영해야 할 것 같습니다.",
+        "박 교사: 맞아요. 학생들이 스스로 학습 목표를 설정하고, 학습 과정에 참여하며, 결과를 성찰하는 과정이 중요하죠. 이를 위해 교과 수업에서 어떤 변화를 주어야 할까요?",
+        "최 교사: 저는 평가 방식의 변화도 필수적이라고 봐요. 학생의 성장을 돕는 과정 중심 평가가 제대로 이루어져야 학생 주도성도 길러질 수 있다고 생각합니다."
+      ],
+      "questions": [
+        {"id": 1, "task": "2022 개정 교육과정에서 강조하는 '학생 주도성'의 개념과 교사의 역할 2가지를 논하시오.", "score": 4},
+        {"id": 2, "task": "학생 주도성을 기르기 위한 교수·학습 방안 2가지를 제시하시오.", "score": 4},
+        {"id": 3, "task": "과정 중심 평가가 학생 주도성 함양에 미치는 긍정적 영향 2가지를 설명하시오.", "score": 4},
+        {"id": 4, "task": "학급 내에서 학생 주도성을 저해하는 요인 1가지와 그 해결 방안 1가지를 논하시오.", "score": 3}
+      ],
+      "formatScore": 5
+    };
 
-    const GRADE_PROMPT = `당신은 초등교사 임용고시 교직논술 수석 채점 위원장입니다. 
-출제 기준과 수험생 답안을 바탕으로 극도로 객관적이고 엄격하게 평가하십시오.
-반드시 아래 JSON 형식으로만 응답해야 하며, 마크다운이나 다른 텍스트는 절대 포함하지 마세요.
-{
-  "totalScore": 0,
-  "contentScore": 0,
-  "formatScore": 0,
-  "contentFeedback": [
-    {
-      "questionId": 1,
-      "task": "하위 논제 1 내용 요약",
-      "earnedScore": 0,
-      "maxScore": 0,
-      "missingKeywords": ["누락 키워드1"],
-      "comment": "감점 요인 등 구체적 피드백"
-    }
-  ],
-  "formatFeedback": {
-    "structureComment": "논리적 체계성 피드백",
-    "grammarComment": "맞춤법 및 어휘 피드백"
-  },
-  "overallReview": "총평"
-}`;
+    const MOCK_RESULT_DATA = {
+      "totalScore": 17,
+      "contentScore": 13,
+      "formatScore": 4,
+      "contentFeedback": [
+        {
+          "questionId": 1,
+          "task": "학생 주도성의 개념과 교사의 역할",
+          "earnedScore": 3,
+          "maxScore": 4,
+          "missingKeywords": ["조력자", "촉진자"],
+          "comment": "학생 주도성의 개념은 잘 서술하였으나, 교사의 역할을 '안내자'로만 한정하여 구체적인 조력자나 촉진자로서의 역할 서술이 부족하여 감점되었습니다."
+        },
+        {
+          "questionId": 2,
+          "task": "학생 주도성을 기르기 위한 교수·학습 방안",
+          "earnedScore": 4,
+          "maxScore": 4,
+          "missingKeywords": [],
+          "comment": "프로젝트 학습과 학생 참여형 수업을 적절히 제시하여 만점입니다."
+        },
+        {
+          "questionId": 3,
+          "task": "과정 중심 평가가 학생 주도성 함양에 미치는 영향",
+          "earnedScore": 3,
+          "maxScore": 4,
+          "missingKeywords": ["자기 성찰"],
+          "comment": "피드백을 통한 개선은 훌륭하게 언급했으나, 학생 스스로 자신의 학습을 돌아보는 '자기 성찰' 기회 제공 측면이 누락되었습니다."
+        },
+        {
+          "questionId": 4,
+          "task": "학생 주도성 저해 요인과 해결 방안",
+          "earnedScore": 3,
+          "maxScore": 3,
+          "missingKeywords": [],
+          "comment": "교사 중심의 일방적 지시를 저해 요인으로 꼽고, 학급 규칙 제정 시 학생 참여를 보장하는 방안을 매우 타당하게 제시했습니다."
+        }
+      ],
+      "formatFeedback": {
+        "structureComment": "서론-본론-결론의 3단 구성이 명확하게 갖춰져 있으며, 단락 간의 연결이 자연스럽습니다.",
+        "grammarComment": "전반적으로 우수하나, 일부 문장에서 주어와 서술어의 호응이 어색한 부분(예: '교사는 ~할 수 있다'가 아닌 '교사는 ~해야 한다'로 통일)이 있어 1점 감점되었습니다."
+      },
+      "overallReview": "학생 주도성과 2022 개정 교육과정의 핵심을 잘 짚어낸 우수한 답안입니다. 교육학적 전문 용어(촉진자, 자기 성찰 등)를 조금 더 적극적으로 활용한다면 완벽한 논술이 될 것입니다."
+    };
 
     function App() {
       // --- [상태 관리] ---
-      const [apiKey, setApiKey] = useState('');
       const [status, setStatus] = useState('setup');
-      const [topic, setTopic] = useState('2022 개정 교육과정과 학생 주도성');
       
       const [examData, setExamData] = useState(null);
       const [answer, setAnswer] = useState('');
@@ -80,16 +99,14 @@
 
       // --- [초기 로드 및 자동 저장] ---
       useEffect(() => {
-        const savedKey = localStorage.getItem('LLM_API_KEY');
         const savedDraft = localStorage.getItem('essay_draft');
-        if (savedKey) setApiKey(savedKey);
         if (savedDraft && status === 'setup') setAnswer(savedDraft);
       }, [status]);
 
       useEffect(() => {
         setCharCount({
           total: answer.length,
-          noSpaces: answer.replace(/\\s/g, '').length,
+          noSpaces: answer.replace(/\s/g, '').length,
         });
 
         const timeoutId = setTimeout(() => {
@@ -119,74 +136,32 @@
         return () => clearInterval(timer);
       }, [status]);
 
-      // --- [AI API 통신 헬퍼] ---
-      const callGeminiAPI = async (systemInstruction, userText) => {
-        const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            contents: [{ role: 'user', parts: [{ text: userText }] }],
-            systemInstruction: { role: 'system', parts: [{ text: systemInstruction }] },
-            generationConfig: { temperature: 0.1, responseMimeType: "application/json" }
-          })
-        });
-        
-        if (!response.ok) {
-          const errData = await response.json().catch(() => ({}));
-          throw new Error(`API 에러: ${errData?.error?.message || 'API 키를 다시 확인해주세요.'}`);
-        }
-        
-        const data = await response.json();
-        if (!data.candidates || data.candidates.length === 0 || !data.candidates[0].content) {
-          throw new Error('AI 응답이 차단되었거나 올바르지 않습니다.');
-        }
-
-        let text = data.candidates[0].content.parts[0].text;
-        text = text.replace(/\`\`\`(json)?/gi, '').trim();
-        
-        try {
-          return JSON.parse(text);
-        } catch (e) {
-          console.error("JSON 파싱 에러 원본 텍스트:", text);
-          throw new Error('AI가 규격화된 형식을 반환하지 못했습니다. 다시 시도해주세요.');
-        }
-      };
-
-      // --- [액션 핸들러] ---
+      // --- [액션 핸들러 (Mock API 호출 에뮬레이션)] ---
       const handleStartExam = async () => {
-        if (!apiKey) return alert('Gemini API 키를 입력해주세요.');
-        localStorage.setItem('LLM_API_KEY', apiKey);
-        
         setAnswer('');
         localStorage.removeItem('essay_draft');
         setStatus('generating');
         
-        try {
-          const data = await callGeminiAPI(GENERATE_PROMPT, `주제: ${topic}`);
-          setExamData(data);
+        // 자연스러운 UI 경험을 위해 1.5초 대기 효과 추가
+        setTimeout(() => {
+          setExamData(MOCK_EXAM_DATA);
           setTimeLeft(3600);
           setStatus('exam');
-        } catch (error) {
-          alert(error.message);
-          setStatus('setup');
-        }
+        }, 1500);
       };
 
       const handleSubmit = async () => {
         if (!answer.trim()) return alert('답안을 작성해주세요.');
-        if (!confirm('답안을 제출하고 채점을 진행하시겠습니까?')) return;
+        if (!confirm('답안을 제출하고 채점을 진행하시겠습니까? (현재 데모 버전이므로 작성한 내용과 무관하게 예시 채점 결과가 출력됩니다.)')) return;
         
         setStatus('grading');
         
-        try {
-          const data = await callGeminiAPI(GRADE_PROMPT, `[출제 기준 및 배점]: ${JSON.stringify(examData)}\n[수험생 답안]: ${answer}`);
-          setResultData(data);
+        // 자연스러운 UI 경험을 위해 2초 대기 효과 추가
+        setTimeout(() => {
+          setResultData(MOCK_RESULT_DATA);
           setStatus('result');
           localStorage.removeItem('essay_draft');
-        } catch (error) {
-          alert(error.message);
-          setStatus('exam');
-        }
+        }, 2000);
       };
 
       const formatTime = (seconds) => {
@@ -202,46 +177,31 @@
             
             {/* 헤더 */}
             <header className="bg-white p-6 rounded-xl shadow border border-gray-200">
-              <h1 className="text-2xl font-bold text-blue-700">초등교직논술 AI 모의고사</h1>
-              <p className="text-gray-500 mt-1">100% 브라우저 기반 출제 및 자동 채점 시스템</p>
+              <h1 className="text-2xl font-bold text-blue-700">초등교직논술 AI 모의고사 (데모 버전)</h1>
+              <p className="text-gray-500 mt-1">API 연결 없이 즉시 체험 가능한 오프라인 모드입니다.</p>
             </header>
 
             {/* 설정 화면 */}
             {status === 'setup' && (
-              <div className="bg-white p-8 rounded-xl shadow border border-gray-200 flex flex-col gap-6">
-                <div>
-                  <label className="block text-sm font-semibold mb-2">Gemini API 키</label>
-                  <input 
-                    type="password" 
-                    value={apiKey} 
-                    onChange={(e) => setApiKey(e.target.value)}
-                    placeholder="AI-..." 
-                    className="w-full p-3 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-semibold mb-2">출제 주제 입력</label>
-                  <input 
-                    type="text" 
-                    value={topic} 
-                    onChange={(e) => setTopic(e.target.value)}
-                    className="w-full p-3 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
-                  />
+              <div className="bg-white p-12 rounded-xl shadow border border-gray-200 flex flex-col items-center text-center gap-6">
+                <div className="bg-blue-50 p-6 rounded-lg w-full">
+                  <h3 className="text-lg font-bold text-blue-800 mb-2">📌 체험 안내</h3>
+                  <p className="text-blue-600">이 버전은 API 키 입력 없이 UI/UX 흐름을 테스트하기 위한 <strong>미리보기(Mock) 버전</strong>입니다. <br/>아래 버튼을 누르면 고정된 모의고사 문제가 바로 출제됩니다.</p>
                 </div>
                 <button 
                   onClick={handleStartExam}
-                  className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-4 rounded-lg transition"
+                  className="bg-blue-600 hover:bg-blue-700 text-white font-bold text-lg py-5 px-12 rounded-full shadow-lg transition-transform transform hover:scale-105"
                 >
-                  모의고사 출제 시작
+                  데모 모의고사 시작하기
                 </button>
               </div>
             )}
 
             {/* 로딩 화면 */}
             {(status === 'generating' || status === 'grading') && (
-              <div className="bg-white p-12 rounded-xl shadow text-center">
+              <div className="bg-white p-12 rounded-xl shadow text-center border border-gray-200">
                 <div className="text-xl font-bold animate-pulse text-blue-600">
-                  {status === 'generating' ? 'AI가 지문을 생성하고 있습니다...' : '수석 채점 위원장이 답안을 채점 중입니다...'}
+                  {status === 'generating' ? '문제를 불러오고 있습니다...' : '답안을 꼼꼼하게 채점 중입니다...'}
                 </div>
               </div>
             )}
@@ -344,7 +304,7 @@
                     onClick={() => { setStatus('setup'); setAnswer(''); setExamData(null); }}
                     className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-8 rounded-lg transition"
                   >
-                    새로운 모의고사 시작하기
+                    메인 화면으로 돌아가기
                   </button>
                 </div>
               </div>
@@ -355,9 +315,8 @@
       );
     }
 
-    // React 애플리케이션 렌더링
     const root = ReactDOM.createRoot(document.getElementById('root'));
-    root.render(<App />);
+    root.render(<App/>);
   </script>
 </body>
 </html>
