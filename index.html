@@ -5,6 +5,9 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>초등교직논술 모의고사</title>
   
+  <!-- 모던 웹 폰트: Pretendard 적용 -->
+  <link rel="stylesheet" as="style" crossorigin href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css" />
+  
   <!-- React 및 ReactDOM CDN -->
   <script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
   <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
@@ -12,10 +15,27 @@
   <!-- Babel -->
   <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
   
-  <!-- Tailwind CSS CDN -->
+  <!-- Tailwind CSS CDN 및 커스텀 설정 -->
   <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Pretendard', 'ui-sans-serif', 'system-ui', '-apple-system', 'BlinkMacSystemFont', 'Segoe UI', 'Roboto', 'Helvetica Neue', 'Arial', 'sans-serif'],
+          },
+          colors: {
+            primary: '#4f46e5', // Indigo 600
+            primaryHover: '#4338ca', // Indigo 700
+            surface: '#ffffff',
+            background: '#f8fafc', // Slate 50
+          }
+        }
+      }
+    }
+  </script>
 </head>
-<body class="bg-gray-50 text-gray-800 font-sans">
+<body class="bg-background text-slate-800 font-sans antialiased selection:bg-indigo-100 selection:text-indigo-900">
   
   <div id="root"></div>
 
@@ -39,21 +59,19 @@
       formatScore: 5
     });
 
-    // --- [동적 채점 알고리즘 (분량 및 키워드 기반 엄격한 채점)] ---
+    // --- [동적 채점 알고리즘] ---
     const evaluateAnswer = (answer, topic, examData) => {
       let contentScore = 0;
       let formatScore = 0;
       const cleanAnswer = answer.trim();
-      const length = cleanAnswer.replace(/\s/g, '').length; // 공백 제외 글자수
+      const length = cleanAnswer.replace(/\s/g, '').length;
 
-      // 1. 체계 점수 (총 5점) - 분량에 따라 칼같이 감점
       if (length < 200) formatScore = 1;
       else if (length < 500) formatScore = 2;
       else if (length < 800) formatScore = 3;
       else if (length < 1000) formatScore = 4;
       else formatScore = 5;
 
-      // 2. 내용 점수 (총 15점)
       const contentFeedback = examData.questions.map(q => {
         let earned = 0;
         let comment = "";
@@ -64,7 +82,6 @@
           earned = 0;
           missing = ["핵심 논점 전면 누락"];
         } else {
-          // 키워드 언급 여부 확인
           if (cleanAnswer.includes(topic)) {
             if (length < 500) {
               earned = Math.max(1, q.score - 2);
@@ -78,7 +95,6 @@
               comment = `주제에 대한 이해도가 높고 요구하는 가지 수를 충족하여 구체적이고 타당하게 서술하였습니다.`;
             }
           } else {
-            // 주제어를 아예 적지 않은 경우 (오프토픽 감점)
             earned = Math.max(0, q.score - 3);
             comment = `논제의 핵심 키워드인 '${topic}'에 대한 명시적인 언급과 논리적 연결이 부족하여 큰 폭으로 감점되었습니다.`;
             missing = [topic];
@@ -126,13 +142,11 @@
       const [isSaved, setIsSaved] = useState(false);
       const [charCount, setCharCount] = useState({ total: 0, noSpaces: 0 });
 
-      // 자동 저장 복구
       useEffect(() => {
         const savedDraft = localStorage.getItem('essay_draft');
         if (savedDraft && status === 'setup') setAnswer(savedDraft);
       }, [status]);
 
-      // 글자 수 카운팅 및 자동 저장
       useEffect(() => {
         setCharCount({
           total: answer.length,
@@ -149,7 +163,6 @@
         return () => clearTimeout(timeoutId);
       }, [answer, status]);
 
-      // 타이머 최적화
       useEffect(() => {
         let timer;
         if (status === 'exam') {
@@ -166,9 +179,8 @@
         return () => clearInterval(timer);
       }, [status]);
 
-      // 출제 시작
       const handleStartExam = () => {
-        const targetTopic = topic.trim() || '2022 개정 교육과정'; // 미입력 시 기본값
+        const targetTopic = topic.trim() || '2022 개정 교육과정';
         
         setAnswer('');
         localStorage.removeItem('essay_draft');
@@ -181,7 +193,6 @@
         }, 800);
       };
 
-      // 제출 및 채점
       const handleSubmit = () => {
         if (!answer.trim()) return alert('답안을 작성해주세요.');
         if (!confirm('답안을 제출하고 채점을 진행하시겠습니까?')) return;
@@ -202,32 +213,35 @@
       };
 
       return (
-        <div className="min-h-screen p-4 flex flex-col items-center justify-between">
-          <div className="w-full max-w-5xl space-y-6 flex-grow">
+        <div className="min-h-screen p-4 md:p-8 flex flex-col items-center justify-between selection:bg-indigo-100">
+          <div className="w-full max-w-6xl space-y-6 flex-grow">
             
-            {/* 헤더 */}
-            <header className="bg-white p-6 rounded-xl shadow border border-gray-200 text-center">
-              <h1 className="text-3xl font-extrabold text-blue-700 tracking-tight">초등교직논술 모의고사</h1>
+            {/* 공통 헤더 */}
+            <header className="bg-surface py-5 px-8 rounded-2xl shadow-sm border border-slate-100 text-center flex items-center justify-center gap-3">
+              <svg className="w-8 h-8 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+              </svg>
+              <h1 className="text-2xl md:text-3xl font-extrabold text-slate-800 tracking-tight">초등교직논술 모의고사</h1>
             </header>
 
-            {/* 설정 화면 */}
+            {/* 1. 설정 화면 */}
             {status === 'setup' && (
-              <div className="bg-white p-16 rounded-xl shadow border border-gray-200 flex flex-col items-center text-center gap-8 mt-10">
-                <div className="w-full max-w-lg">
-                  <label className="block text-lg font-bold text-gray-700 mb-3 text-left">핵심 키워드 입력</label>
+              <div className="bg-surface p-8 md:p-16 rounded-3xl shadow-sm border border-slate-100 flex flex-col items-center text-center gap-10 mt-8 md:mt-12 w-full max-w-2xl mx-auto">
+                <div className="w-full text-left space-y-4">
+                  <label className="block text-lg font-bold text-slate-700">어떤 주제로 연습할까요?</label>
                   <input 
                     type="text" 
                     value={topic} 
                     onChange={(e) => setTopic(e.target.value)}
-                    placeholder="예: 과정 중심 평가, 늘봄학교, 에듀테크 등" 
-                    className="w-full p-4 border-2 border-gray-200 rounded-xl focus:ring-4 focus:ring-blue-100 focus:border-blue-500 outline-none text-lg transition-all"
+                    placeholder="예: 학생 주도성, 늘봄학교, 기초학력 등" 
+                    className="w-full p-5 bg-slate-50 border border-slate-200 rounded-2xl focus:ring-4 focus:ring-indigo-100 focus:border-primary outline-none text-lg transition-all duration-300 placeholder-slate-400"
                     onKeyDown={(e) => e.key === 'Enter' && handleStartExam()}
                   />
-                  <p className="text-sm text-gray-400 mt-2 text-left">* 키워드에 맞춘 모의고사 지문이 즉시 출제됩니다.</p>
+                  <p className="text-sm text-slate-500 font-medium pl-2">입력한 키워드를 중심으로 출제 위원회가 맞춤형 지문을 구성합니다.</p>
                 </div>
                 <button 
                   onClick={handleStartExam}
-                  className="bg-blue-600 hover:bg-blue-700 text-white font-bold text-xl py-5 px-16 rounded-full shadow-xl transition-transform transform hover:-translate-y-1"
+                  className="w-full md:w-auto bg-primary hover:bg-primaryHover text-white font-bold text-lg md:text-xl py-5 px-16 rounded-2xl shadow-lg shadow-indigo-200 transition-all duration-300 transform hover:-translate-y-1 active:translate-y-0"
                 >
                   모의고사 시작하기
                 </button>
@@ -236,113 +250,168 @@
 
             {/* 로딩 화면 */}
             {(status === 'generating' || status === 'grading') && (
-              <div className="bg-white p-16 rounded-xl shadow text-center border border-gray-200 mt-10">
-                <div className="text-2xl font-bold animate-pulse text-blue-600">
-                  {status === 'generating' ? '입력하신 키워드로 문제를 생성 중입니다...' : '답안을 꼼꼼하게 채점 중입니다...'}
+              <div className="bg-surface p-16 rounded-3xl shadow-sm border border-slate-100 text-center mt-12 w-full max-w-2xl mx-auto">
+                <div className="inline-block animate-spin rounded-full h-12 w-12 border-4 border-slate-200 border-t-primary mb-6"></div>
+                <div className="text-xl md:text-2xl font-bold text-slate-700">
+                  {status === 'generating' ? '맞춤형 모의고사를 출제하고 있습니다...' : '수석 채점관이 답안을 분석하고 있습니다...'}
                 </div>
               </div>
             )}
 
-            {/* 시험 화면 */}
+            {/* 2. 시험 화면 */}
             {status === 'exam' && examData && (
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-4">
-                {/* 지문 영역 */}
-                <div className="bg-white p-6 rounded-xl shadow border border-gray-200 h-[800px] overflow-y-auto">
-                  <h2 className="text-xl font-bold mb-4">{examData.title}</h2>
-                  <div className="bg-gray-100 p-5 rounded-xl mb-6 space-y-4">
-                    {examData.scenario.map((line, idx) => (
-                      <p key={idx} className="leading-relaxed text-gray-800 text-lg">{line}</p>
-                    ))}
+              <div className="flex flex-col lg:flex-row gap-6 mt-6">
+                
+                {/* 왼쪽: 지문 영역 */}
+                <div className="w-full lg:w-5/12 bg-surface p-6 md:p-8 rounded-3xl shadow-sm border border-slate-100 flex flex-col h-[500px] lg:h-[750px]">
+                  <h2 className="text-xl md:text-2xl font-bold mb-6 text-slate-800 leading-snug">{examData.title}</h2>
+                  
+                  <div className="flex-grow overflow-y-auto pr-2 custom-scrollbar space-y-6 mb-6">
+                    <div className="bg-slate-50 p-6 rounded-2xl space-y-5 border border-slate-100">
+                      {examData.scenario.map((line, idx) => (
+                        <p key={idx} className="leading-relaxed text-slate-700 text-base md:text-lg break-keep">{line}</p>
+                      ))}
+                    </div>
                   </div>
-                  <h3 className="font-bold text-lg mb-4 bg-blue-50 text-blue-800 p-3 rounded-lg">작성 조건 및 배점 (총 15점)</h3>
-                  <ul className="list-decimal pl-6 space-y-3 font-medium text-gray-700">
-                    {examData.questions.map((q) => (
-                      <li key={q.id} className="leading-relaxed">{q.task} <span className="text-blue-600 font-bold">[{q.score}점]</span></li>
-                    ))}
-                  </ul>
+
+                  <div className="pt-4 border-t border-slate-100">
+                    <div className="flex items-center gap-2 mb-4">
+                      <span className="bg-indigo-100 text-primary px-3 py-1 rounded-lg text-sm font-bold">총 15점</span>
+                      <h3 className="font-bold text-lg text-slate-800">작성 조건 및 배점</h3>
+                    </div>
+                    <ul className="list-decimal pl-5 space-y-3 font-medium text-slate-600 text-sm md:text-base">
+                      {examData.questions.map((q) => (
+                        <li key={q.id} className="leading-relaxed pl-1">{q.task} <span className="text-primary font-bold ml-1">[{q.score}점]</span></li>
+                      ))}
+                    </ul>
+                  </div>
                 </div>
 
-                {/* 답안 작성 에디터 */}
-                <div className="bg-white p-6 rounded-xl shadow border border-gray-200 flex flex-col h-[800px]">
-                  <div className="flex justify-between items-center bg-gray-100 p-4 rounded-xl mb-4">
-                    <div className={`text-2xl font-bold ${timeLeft < 600 ? 'text-red-600 animate-pulse' : 'text-blue-600'}`}>
-                      남은 시간: {formatTime(timeLeft)}
+                {/* 오른쪽: 답안 작성 에디터 */}
+                <div className="w-full lg:w-7/12 bg-surface p-6 md:p-8 rounded-3xl shadow-sm border border-slate-100 flex flex-col h-[600px] lg:h-[750px]">
+                  
+                  {/* 상단 타이머 바 */}
+                  <div className="flex flex-wrap justify-between items-center bg-slate-50 border border-slate-100 p-4 rounded-2xl mb-6 gap-4">
+                    <div className="flex items-center gap-3">
+                      <div className="bg-white p-2 rounded-xl shadow-sm">
+                        <svg className={`w-6 h-6 ${timeLeft < 600 ? 'text-red-500 animate-pulse' : 'text-primary'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                      </div>
+                      <div className={`text-2xl font-black font-mono tracking-wider ${timeLeft < 600 ? 'text-red-600' : 'text-slate-700'}`}>
+                        {formatTime(timeLeft)}
+                      </div>
                     </div>
-                    <div className="text-sm text-gray-500 font-medium bg-white px-3 py-1 rounded-full shadow-sm">
-                      {isSaved ? '✅ 임시 저장됨' : '작성 중...'}
+                    <div className="text-sm font-bold text-slate-500 bg-white px-4 py-2 rounded-xl shadow-sm flex items-center gap-2">
+                      {isSaved ? <><span className="w-2 h-2 rounded-full bg-green-500"></span>임시 저장됨</> : <><span className="w-2 h-2 rounded-full bg-amber-400 animate-pulse"></span>작성 중...</>}
                     </div>
                   </div>
                   
+                  {/* 텍스트 에디터 */}
                   <textarea
                     value={answer}
                     onChange={(e) => setAnswer(e.target.value)}
-                    placeholder="여기에 답안을 작성하세요. (권장: 1,100 ~ 1,200자)"
-                    className="flex-1 w-full p-5 border-2 border-gray-200 rounded-xl resize-none focus:ring-4 focus:ring-blue-100 focus:border-blue-400 outline-none text-lg leading-loose mb-4 transition-all"
+                    placeholder="현장 교사의 관점에서 구체적이고 논리적인 답안을 작성해주세요.&#13;&#10;(권장 분량: 공백 포함 1,100 ~ 1,200자)"
+                    className="flex-grow w-full p-6 bg-slate-50 border border-slate-200 rounded-2xl resize-none focus:ring-4 focus:ring-indigo-50 focus:border-primary outline-none text-base md:text-lg leading-loose transition-all duration-300 placeholder-slate-400 custom-scrollbar mb-6"
                     spellCheck={false}
                   />
                   
-                  <div className="flex justify-between items-center">
-                    <span className="text-sm text-gray-600 font-bold bg-gray-100 px-4 py-2 rounded-lg">
-                      공백 포함: {charCount.total}자 / 공백 제외: <span className={charCount.noSpaces < 1000 ? "text-red-500" : "text-green-600"}>{charCount.noSpaces}자</span>
-                    </span>
+                  {/* 하단 컨트롤 패널 */}
+                  <div className="flex flex-col sm:flex-row justify-between items-center gap-4 pt-2">
+                    <div className="flex gap-4 text-sm font-semibold bg-slate-50 px-5 py-3 rounded-xl border border-slate-100 w-full sm:w-auto justify-center">
+                      <span className="text-slate-500">포함 <span className="text-slate-800 ml-1">{charCount.total}</span></span>
+                      <span className="w-px bg-slate-300"></span>
+                      <span className="text-slate-500">제외 
+                        <span className={`ml-1 ${charCount.noSpaces < 1000 ? "text-rose-500" : "text-emerald-600"}`}>
+                          {charCount.noSpaces}
+                        </span>
+                      </span>
+                    </div>
                     <button 
                       onClick={handleSubmit}
-                      className="bg-gray-800 hover:bg-black text-white font-bold py-3 px-8 rounded-lg shadow-md transition-colors"
+                      className="w-full sm:w-auto bg-slate-800 hover:bg-slate-900 text-white font-bold text-lg py-3 px-10 rounded-xl shadow-md transition-all transform hover:-translate-y-0.5"
                     >
-                      답안 제출하기
+                      최종 제출하기
                     </button>
                   </div>
                 </div>
               </div>
             )}
 
-            {/* 채점 결과 대시보드 */}
+            {/* 3. 결과 화면 */}
             {status === 'result' && resultData && (
-              <div className="bg-white p-8 rounded-xl shadow border border-gray-200 space-y-8 mt-4">
-                <div className="text-center border-b pb-8">
-                  <div className="inline-block bg-blue-50 text-blue-700 px-6 py-2 rounded-full font-bold mb-4">채점 완료</div>
-                  <h2 className="text-4xl font-extrabold text-gray-900">최종 점수: {resultData.totalScore} / 20점</h2>
-                  <p className="text-gray-600 mt-4 text-lg font-medium">{resultData.overallReview}</p>
+              <div className="bg-surface p-6 md:p-12 rounded-3xl shadow-sm border border-slate-100 mt-8 w-full max-w-4xl mx-auto">
+                
+                {/* 총점 헤더 */}
+                <div className="text-center pb-10 mb-10 border-b border-slate-100">
+                  <span className="inline-block bg-indigo-50 text-primary px-5 py-1.5 rounded-full text-sm font-bold tracking-wide mb-6">평가 결과 보고서</span>
+                  <div className="flex justify-center items-end gap-2 mb-6">
+                    <h2 className="text-5xl md:text-7xl font-black text-slate-800">{resultData.totalScore}</h2>
+                    <span className="text-2xl md:text-3xl font-bold text-slate-400 mb-1 md:mb-2">/ 20</span>
+                  </div>
+                  <p className="text-slate-600 text-lg md:text-xl font-medium max-w-2xl mx-auto leading-relaxed break-keep">
+                    {resultData.overallReview}
+                  </p>
                 </div>
 
-                <div>
-                  <h3 className="text-2xl font-bold text-blue-700 mb-4 flex items-center border-b-2 border-blue-100 pb-2">
-                    내용 영역 ({resultData.contentScore} / 15점)
-                  </h3>
-                  <div className="space-y-4">
-                    {resultData.contentFeedback.map((fb) => (
-                      <div key={fb.questionId} className="bg-blue-50 p-5 rounded-xl border-l-4 border-blue-500 hover:shadow-md transition-shadow">
-                        <div className="flex justify-between font-bold mb-3 text-lg">
-                          <span className="text-gray-800">{fb.task.split(' ')[0]} 관련 논제</span>
-                          <span className="text-blue-700">{fb.earnedScore} / {fb.maxScore}점</span>
+                <div className="space-y-12">
+                  {/* 내용 영역 */}
+                  <section>
+                    <div className="flex items-center gap-3 mb-6">
+                      <div className="w-2 h-8 bg-primary rounded-full"></div>
+                      <h3 className="text-2xl font-bold text-slate-800">
+                        논술의 내용 <span className="text-primary ml-2">{resultData.contentScore}점</span>
+                      </h3>
+                    </div>
+                    <div className="grid gap-4">
+                      {resultData.contentFeedback.map((fb) => (
+                        <div key={fb.questionId} className="bg-slate-50 p-6 rounded-2xl border border-slate-100 hover:border-indigo-200 transition-colors">
+                          <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-2 mb-4">
+                            <span className="font-bold text-slate-800 text-lg">{fb.task.split(' ')[0]} 관련 논점</span>
+                            <span className="bg-white border border-slate-200 text-slate-700 px-3 py-1 rounded-lg font-bold text-sm text-center">
+                              {fb.earnedScore} / {fb.maxScore} 획득
+                            </span>
+                          </div>
+                          {fb.missingKeywords && fb.missingKeywords.length > 0 && (
+                            <div className="mb-3 flex flex-wrap gap-2">
+                              <span className="text-sm font-bold text-rose-500 bg-rose-50 px-2.5 py-1 rounded-md">누락 키워드</span>
+                              <span className="text-sm text-slate-600 pt-1">{fb.missingKeywords.join(', ')}</span>
+                            </div>
+                          )}
+                          <p className="text-slate-600 leading-relaxed">{fb.comment}</p>
                         </div>
-                        {fb.missingKeywords && fb.missingKeywords.length > 0 && (
-                          <p className="text-sm font-bold text-red-500 mb-2 bg-red-50 inline-block px-2 py-1 rounded">
-                            누락 키워드: {fb.missingKeywords.join(', ')}
-                          </p>
-                        )}
-                        <p className="text-gray-700 text-base leading-relaxed">{fb.comment}</p>
+                      ))}
+                    </div>
+                  </section>
+
+                  {/* 체계 영역 */}
+                  <section>
+                    <div className="flex items-center gap-3 mb-6">
+                      <div className="w-2 h-8 bg-emerald-500 rounded-full"></div>
+                      <h3 className="text-2xl font-bold text-slate-800">
+                        논술의 체계 <span className="text-emerald-600 ml-2">{resultData.formatScore}점</span>
+                      </h3>
+                    </div>
+                    <div className="bg-slate-50 p-6 rounded-2xl border border-slate-100 space-y-5">
+                      <div>
+                        <strong className="text-slate-800 block mb-2 font-bold text-lg">논리적 체계성</strong>
+                        <p className="text-slate-600 leading-relaxed">{resultData.formatFeedback.structureComment}</p>
                       </div>
-                    ))}
-                  </div>
+                      <div className="w-full h-px bg-slate-200"></div>
+                      <div>
+                        <strong className="text-slate-800 block mb-2 font-bold text-lg">맞춤법 및 어휘</strong>
+                        <p className="text-slate-600 leading-relaxed">{resultData.formatFeedback.grammarComment}</p>
+                      </div>
+                    </div>
+                  </section>
                 </div>
 
-                <div>
-                  <h3 className="text-2xl font-bold text-green-700 mb-4 flex items-center border-b-2 border-green-100 pb-2">
-                    체계 영역 ({resultData.formatScore} / 5점)
-                  </h3>
-                  <div className="bg-green-50 p-5 rounded-xl border-l-4 border-green-500 space-y-4">
-                    <p className="text-base text-gray-700"><strong className="text-gray-900 block mb-1">논리적 체계성:</strong> {resultData.formatFeedback.structureComment}</p>
-                    <p className="text-base text-gray-700"><strong className="text-gray-900 block mb-1">맞춤법 및 어휘:</strong> {resultData.formatFeedback.grammarComment}</p>
-                  </div>
-                </div>
-
-                <div className="text-center pt-8">
+                <div className="text-center mt-16">
                   <button 
                     onClick={() => { setStatus('setup'); setAnswer(''); setExamData(null); setTopic(''); }}
-                    className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-4 px-10 rounded-full shadow-lg transition-transform transform hover:-translate-y-1"
+                    className="bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold py-4 px-10 rounded-2xl transition-colors"
                   >
-                    메인 화면으로 돌아가기
+                    처음으로 돌아가기
                   </button>
                 </div>
               </div>
@@ -351,7 +420,7 @@
           </div>
           
           {/* 하단 저작권 표시 */}
-          <footer className="mt-12 mb-4 text-center text-gray-400 text-sm font-medium w-full">
+          <footer className="mt-16 mb-4 text-center text-slate-400 text-sm font-medium w-full tracking-wide">
             &copy; 2026. Made by. 엽쌤
           </footer>
         </div>
@@ -361,5 +430,23 @@
     const root = ReactDOM.createRoot(document.getElementById('root'));
     root.render(<App/>);
   </script>
+
+  <style>
+    /* 스크롤바 디자인 커스텀 */
+    .custom-scrollbar::-webkit-scrollbar {
+      width: 6px;
+    }
+    .custom-scrollbar::-webkit-scrollbar-track {
+      background: #f1f5f9; 
+      border-radius: 8px;
+    }
+    .custom-scrollbar::-webkit-scrollbar-thumb {
+      background: #cbd5e1; 
+      border-radius: 8px;
+    }
+    .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+      background: #94a3b8; 
+    }
+  </style>
 </body>
 </html>
