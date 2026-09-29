@@ -1,0 +1,14 @@
+{
+  "name": "teacher-test",
+  "private": true,
+  "description": "초등교직논술 모의고사 — src/ 원본으로 app.js·app.css를 만듭니다",
+  "scripts": {
+    "build:js": "esbuild src/app.jsx --outfile=app.js --jsx=transform --target=es2018 --minify --legal-comments=none",
+    "build:css": "tailwindcss -i src/styles.css -o app.css --minify",
+    "build": "npm run build:js && npm run build:css"
+  },
+  "devDependencies": {
+    "esbuild": "0.24.0",
+    "tailwindcss": "3.4.17"
+  }
+}
