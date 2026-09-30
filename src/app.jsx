@@ -920,7 +920,7 @@
           </div>
 
           <footer className="mt-16 mb-4 text-center text-slate-400 text-sm font-medium w-full tracking-wide">
-            © 2026 엽쌤 · 수업에는 자유롭게 사용하세요 🙌 · <a href="https://gmlduqzhd123-lab.github.io/YScode/" className="underline underline-offset-4 hover:text-slate-600">엽쌤의 다른 앱 보기 →</a>
+            © 2026 엽쌤 · 수업에는 자유롭게 사용하세요 🙌 · <a href="https://gmlduqzhd123-lab.github.io/YScode/" className="underline underline-offset-4 hover:text-slate-600">엽쌤의 다른 앱 보기 →</a><span className="install-btn"> · <button type="button" className="hover:text-slate-600">📲 앱 설치</button></span>
             <p className="mt-2 text-xs text-slate-400 font-normal leading-relaxed break-keep">
               이 앱의 문항·지문·채점 기준은 엽쌤의 창작물로 저작권이 있습니다. 개인 학습과 수업 목적의 사용은 자유이나, 무단 복제·재배포 및 상업적 이용을 금합니다.
               <br className="hidden sm:inline" /> 실제 임용시험 기출문제가 아니며, 채점 결과는 참고용입니다.
