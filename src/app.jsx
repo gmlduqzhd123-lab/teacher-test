@@ -817,6 +817,9 @@
                   <button onClick={handleStartExam} className="w-full md:w-auto bg-primary hover:bg-primaryHover text-white font-bold text-lg md:text-xl py-5 px-16 rounded-2xl shadow-lg shadow-indigo-200 transition-all transform hover:-translate-y-1">
                     모의고사 시작하기
                   </button>
+                  <button type="button" data-ys-install className="w-full md:w-auto md:ml-3 mt-3 md:mt-0 bg-white border-2 border-indigo-200 text-primary hover:bg-indigo-50 font-bold text-base md:text-lg py-3.5 md:py-5 px-8 rounded-2xl transition-colors">
+                    📲 앱으로 설치하기
+                  </button>
                 </Card>
                 <HistoryPanel
                   history={history}
