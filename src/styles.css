@@ -18,3 +18,12 @@
     .custom-scrollbar::-webkit-scrollbar-thumb:hover {
       background: #94a3b8;
     }
+
+    /* 시험 화면 답안지: 글줄(line-height 2, leading-[2])에 맞춘 밑줄 (글과 함께 스크롤) */
+    .answer-sheet {
+      background-color: #fff;
+      background-image: repeating-linear-gradient(to bottom, transparent 0, transparent calc(2em - 1px), #e2e8f0 calc(2em - 1px), #e2e8f0 2em);
+      background-attachment: local;
+      background-position: 0 1.5rem;
+    }
+    .answer-sheet:disabled { background-color: #fff; }

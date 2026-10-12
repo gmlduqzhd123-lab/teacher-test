@@ -328,7 +328,7 @@
 
     function Toasts({ toasts }) {
       return (
-        <div className="fixed top-4 left-1/2 -translate-x-1/2 z-50 space-y-2 w-[calc(100%-32px)] max-w-md">
+        <div className="fixed top-20 left-1/2 -translate-x-1/2 z-50 space-y-2 w-[calc(100%-32px)] max-w-md">
           {toasts.map((t) => (
             <div key={t.id} className={`px-5 py-3 rounded-xl shadow-lg text-sm font-bold text-white ${t.tone === 'warn' ? 'bg-rose-500' : 'bg-slate-800'}`}>
               {t.text}
@@ -604,58 +604,61 @@
     // --- [시험지: 문제·지문·배점] ---
     function ExamPaper({ exam }) {
       return (
-        <div className="space-y-8">
-          <section>
-            <div className="flex items-center gap-2 mb-3">
-              <span className="bg-slate-800 text-white px-4 py-1 rounded-md text-sm font-extrabold tracking-widest shadow-sm">문제</span>
+        <div className="text-slate-900">
+          <div className="flex justify-between items-start gap-4 border-b-2 border-slate-900 pb-3">
+            <div className="min-w-0">
+              <p className="text-xs font-bold text-slate-500">초등 임용 1차 실전 모의평가</p>
+              <p className="text-xl md:text-2xl font-black tracking-tight mt-1">제1교시 교직논술</p>
             </div>
-            <p className="text-slate-800 leading-loose text-base md:text-lg break-keep">{exam.problem}</p>
-          </section>
+            <div className="grid grid-cols-2 text-[11px] border border-slate-900 shrink-0" aria-hidden="true">
+              <span className="px-2 py-1 border-r border-b border-slate-900 font-bold">성명</span><span className="w-16 border-b border-slate-900"></span>
+              <span className="px-2 py-1 border-r border-slate-900 font-bold">수험번호</span><span className="w-16"></span>
+            </div>
+          </div>
 
-          <section className="bg-white p-6 border border-slate-300 space-y-4 shadow-sm">
-            {exam.passageTitle && <div className="text-center font-bold text-slate-600 text-sm">[{exam.passageTitle}]</div>}
+          <p className="mt-5 text-base md:text-[17px] leading-8 break-keep"><b className="mr-1">문제</b>{exam.problem}</p>
+
+          <section className="mt-5 border border-slate-400 p-5 space-y-3">
+            {exam.passageTitle && <p className="text-center font-bold text-slate-600 text-sm">[{exam.passageTitle}]</p>}
             {exam.passage.map((p, idx) => (
-              <div key={idx} className="flex gap-3 text-base md:text-lg">
-                {p.speaker && <span className="font-extrabold text-slate-800 whitespace-nowrap">{p.speaker}{p.speaker.startsWith('(') ? '' : ':'}</span>}
-                <span className="text-slate-700 leading-loose break-keep">{p.text}</span>
+              <div key={idx} className="flex gap-3 text-[15px] md:text-base">
+                {p.speaker && <span className="font-extrabold whitespace-nowrap">{p.speaker}{p.speaker.startsWith('(') ? '' : ':'}</span>}
+                <span className="text-slate-700 leading-8 break-keep">{p.text}</span>
               </div>
             ))}
           </section>
 
-          <div className="w-full h-px bg-slate-300"></div>
+          <section className="mt-6">
+            <h3 className="text-sm font-black border-b border-slate-900 pb-1">&lt;답안 작성 시 유의 사항&gt;</h3>
+            <ul className="mt-2 space-y-1 text-sm text-slate-700">
+              {GUIDELINES.map((g, idx) => <li key={idx} className="leading-relaxed break-keep">○ {g}</li>)}
+            </ul>
+          </section>
 
-          <section className="space-y-8">
-            <div>
-              <h3 className="font-bold text-slate-800 text-sm md:text-base mb-4 bg-slate-100 px-3 py-1.5 inline-block rounded border border-slate-200">답안 작성 시 유의 사항</h3>
-              <ul className="list-disc pl-5 space-y-2 text-sm md:text-base text-slate-700 font-medium">
-                {GUIDELINES.map((g, idx) => <li key={idx} className="leading-relaxed pl-1">{g}</li>)}
-              </ul>
-            </div>
-            <div>
-              <h3 className="font-bold text-slate-800 text-sm md:text-base mb-4 bg-slate-100 px-3 py-1.5 inline-block rounded border border-slate-200">배 점</h3>
-              <div className="space-y-5 text-sm md:text-base text-slate-700 font-medium bg-slate-50 p-5 border border-slate-200 rounded-xl">
-                <div>
-                  <strong className="block mb-2 text-slate-900 border-b border-slate-300 pb-1">• 논술의 내용 [총 {contentTotal(exam)}점]</strong>
-                  <ul className="space-y-2">
-                    {exam.questions.map((q) => (
-                      <li key={q.id} className="flex justify-between items-start gap-4">
-                        <span className="leading-relaxed break-keep">- {q.task}</span>
-                        <span className="font-bold whitespace-nowrap">[{q.score}점]</span>
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-                <div>
-                  <strong className="block mb-2 text-slate-900 border-b border-slate-300 pb-1">• 논술의 체계 [총 5점]</strong>
-                  <ul className="space-y-2">
-                    {FORMAT_ITEMS.map((item, idx) => (
-                      <li key={idx} className="flex justify-between items-start gap-4">
-                        <span className="leading-relaxed">- {item.text}</span>
-                        <span className="font-bold whitespace-nowrap">[{item.score}점]</span>
-                      </li>
-                    ))}
-                  </ul>
-                </div>
+          <section className="mt-6">
+            <h3 className="text-sm font-black border-b border-slate-900 pb-1">&lt;배 점&gt;</h3>
+            <div className="mt-3 bg-slate-50 border border-slate-200 p-4 text-sm space-y-4">
+              <div>
+                <p className="font-bold mb-1.5">• 논술의 내용 [총 {contentTotal(exam)}점]</p>
+                <ul className="space-y-1.5 text-slate-700">
+                  {exam.questions.map((q) => (
+                    <li key={q.id} className="flex justify-between items-start gap-4">
+                      <span className="leading-relaxed break-keep">- {q.task}</span>
+                      <b className="whitespace-nowrap text-slate-900">[{q.score}점]</b>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+              <div>
+                <p className="font-bold mb-1.5">• 논술의 체계 [총 5점]</p>
+                <ul className="space-y-1.5 text-slate-700">
+                  {FORMAT_ITEMS.map((item, idx) => (
+                    <li key={idx} className="flex justify-between items-start gap-4">
+                      <span className="leading-relaxed">- {item.text}</span>
+                      <b className="whitespace-nowrap text-slate-900">[{item.score}점]</b>
+                    </li>
+                  ))}
+                </ul>
               </div>
             </div>
           </section>
@@ -909,7 +912,7 @@
       const dday = dDay(settings.examDate);
 
       return (
-        <div className={`min-h-screen p-4 md:p-8 flex flex-col items-center justify-between ${status === 'setup' ? 'bg-[#f6f5f1]' : ''}`}>
+        <div className={`min-h-screen p-4 md:p-8 flex flex-col items-center justify-between ${status === 'setup' || status === 'exam' ? 'bg-[#f6f5f1]' : ''}`}>
           <Toasts toasts={toasts} />
           {showSettings && (
             <SettingsModal
@@ -925,7 +928,7 @@
                 <button type="button" data-qr aria-label="QR 코드로 접속" className="px-3 py-1.5 rounded-xl bg-white border border-slate-200 hover:bg-indigo-50 text-slate-700 text-sm font-bold whitespace-nowrap shadow-sm">📱 QR</button>
               </div>
             )}
-            {status !== 'setup' && (
+            {status === 'result' && (
             <header className="bg-surface py-5 px-4 md:px-8 rounded-2xl shadow-sm border border-slate-100 flex items-center justify-between gap-2">
               <div className="w-24 md:w-32">
                 {(status === 'exam' || status === 'result') && (
@@ -976,84 +979,106 @@
 
             {/* 2. 시험 화면 */}
             {status === 'exam' && session && (
-              <div className="flex flex-col lg:flex-row gap-6 mt-6">
-                <Card className="w-full lg:w-5/12 p-6 md:p-8 flex flex-col h-[600px] lg:h-[800px]">
-                  <div className="flex-grow overflow-y-auto pr-3 custom-scrollbar pb-4">
-                    <ExamPaper exam={session.exam} />
-                  </div>
-                </Card>
-
-                <Card className="w-full lg:w-7/12 p-6 md:p-8 flex flex-col h-[700px] lg:h-[800px]">
-                  <div className="flex flex-wrap justify-between items-center bg-slate-50 border border-slate-100 p-3 rounded-2xl mb-4 gap-3">
-                    <div className="flex items-center gap-3">
-                      <div className={`text-2xl font-black font-mono tracking-wider ${remaining != null && remaining < 600 ? 'text-red-600' : 'text-slate-700'}`}>
-                        {remaining == null ? '제한 없음' : formatTime(remaining)}
-                      </div>
+              <div>
+                <nav className="sticky top-0 z-30 py-3 bg-[#f6f5f1]/95 backdrop-blur">
+                  <div className="max-w-7xl mx-auto flex items-center justify-between gap-3">
+                    <div className="flex items-center gap-2 md:gap-3 min-w-0">
+                      <button onClick={handleGoHome} className="flex items-center gap-1 text-slate-500 hover:text-[#1E3A8A] font-bold text-sm px-2 py-1.5 rounded-lg hover:bg-white shrink-0">
+                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" /></svg>
+                        <span className="hidden sm:inline">홈으로</span>
+                      </button>
+                      <img src="icons/icon-192.png" alt="" className="hidden sm:block w-7 h-7 rounded-lg" />
+                      <h1 className="min-w-0 truncate font-extrabold tracking-tight">
+                        <span className="hidden md:inline text-slate-500 font-semibold">실전 모의고사 · </span>{session.exam.topic}
+                      </h1>
+                    </div>
+                    <div className="flex items-center gap-2 shrink-0">
                       {remaining != null && remaining > 0 && (
-                        <button onClick={togglePause} className="text-sm font-bold px-3 py-1.5 rounded-lg bg-white shadow-sm text-slate-600 hover:text-primary">
-                          {session.paused ? '▶ 재개' : '❚❚ 일시정지'}
+                        <button onClick={togglePause} className="text-sm font-bold px-3 py-2 rounded-lg bg-white border border-slate-300 text-slate-700 hover:bg-indigo-50">
+                          {session.paused ? '▶ 재개' : '❚❚'}<span className="hidden sm:inline">{session.paused ? '' : ' 일시정지'}</span>
                         </button>
                       )}
-                      {remaining === 0 && <span className="text-sm font-bold text-rose-500">시간 종료</span>}
+                      <div className={`rounded-xl px-3 md:px-4 py-1.5 text-white shadow-md ${remaining != null && remaining < 600 ? 'bg-rose-600' : 'bg-slate-900'}`}>
+                        <p className="hidden sm:block text-[10px] font-bold text-white/60 leading-none">{remaining === 0 ? '시간 종료' : session.paused ? '일시정지' : '남은 시간'}</p>
+                        <p className="font-mono text-xl md:text-2xl font-black tracking-wider leading-tight">
+                          {remaining == null ? '제한 없음' : formatTime(remaining)}
+                        </p>
+                      </div>
                     </div>
-                    <button onClick={() => setShowOutline(!showOutline)} className={`text-sm font-bold px-3 py-1.5 rounded-lg ${showOutline ? 'bg-primary text-white' : 'bg-white shadow-sm text-slate-600 hover:text-primary'}`}>
-                      📝 개요 메모
-                    </button>
+                  </div>
+                </nav>
+
+                <div className="max-w-7xl mx-auto mt-6 flex flex-col lg:flex-row gap-6">
+                  <div className="w-full lg:w-5/12 bg-white rounded-md border border-slate-300 shadow-[0_20px_40px_-24px_rgba(15,23,42,.35)] flex flex-col h-[600px] lg:h-[calc(100vh-150px)] lg:min-h-[640px]">
+                    <div className="flex-grow overflow-y-auto custom-scrollbar p-6 md:p-7">
+                      <ExamPaper exam={session.exam} />
+                    </div>
                   </div>
 
-                  <div className="flex flex-wrap gap-2 mb-4" title="답안에 각 논점과 관련된 표현이 들어갔는지 대략 표시합니다">
-                    {coverage.map((q) => (
-                      <span key={q.id} className={`text-xs font-bold px-2.5 py-1 rounded-md ${q.hit ? 'bg-emerald-50 text-emerald-700' : 'bg-slate-100 text-slate-400'}`}>
-                        {q.hit ? '✓' : '○'} {q.id}. {q.label}
-                      </span>
-                    ))}
-                  </div>
-
-                  {showOutline && (
-                    <div className="mb-4">
-                      <textarea
-                        value={session.outline}
-                        onChange={(e) => updateSession({ outline: e.target.value })}
-                        placeholder="개요를 먼저 짜면 논점 누락을 줄일 수 있습니다."
-                        className="w-full h-36 p-4 bg-amber-50/60 border border-amber-100 rounded-xl resize-none outline-none text-sm leading-relaxed custom-scrollbar"
-                      />
-                      {!session.outline.trim() && (
-                        <button onClick={() => updateSession({ outline: outlineTemplate(session.exam) })} className="text-xs font-bold text-amber-700 mt-1">
-                          + 배점 항목으로 개요 틀 채우기
-                        </button>
-                      )}
+                  <div className="w-full lg:w-7/12 bg-white rounded-2xl border border-slate-200 shadow-[0_1px_0_#e2e8f0,0_12px_32px_-12px_rgba(15,23,42,.18)] p-4 md:p-6 flex flex-col h-[700px] lg:h-[calc(100vh-150px)] lg:min-h-[640px]">
+                    <div className="flex flex-wrap items-center justify-between gap-3 border-b-2 border-slate-900 pb-3 mb-3">
+                      <p className="text-lg font-black tracking-tight">답안지</p>
+                      <button onClick={() => setShowOutline(!showOutline)} className={`text-sm font-bold px-3 py-1.5 rounded-lg border ${showOutline ? 'bg-slate-900 border-slate-900 text-white' : 'bg-white border-slate-300 text-slate-700 hover:bg-indigo-50'}`}>
+                        📝 개요 메모
+                      </button>
                     </div>
-                  )}
 
-                  <div className="relative flex-grow flex">
-                    <textarea
-                      value={answer}
-                      onChange={(e) => updateSession({ answer: e.target.value })}
-                      disabled={session.paused}
-                      placeholder={"서론 - 논점별 본론 - 결론 순서로, 현장 교사의 관점에서 구체적으로 작성해주세요.\n(권장 분량: 공백 제외 1,000자 이상)"}
-                      className="flex-grow w-full p-6 bg-slate-50 border border-slate-200 rounded-2xl resize-none focus:ring-4 focus:ring-indigo-50 focus:border-primary outline-none text-base md:text-lg leading-loose placeholder-slate-400 custom-scrollbar mb-4"
-                      spellCheck={false}
-                    />
-                    {session.paused && (
-                      <div className="absolute inset-0 mb-4 rounded-2xl bg-white/80 flex items-center justify-center font-bold text-slate-600">
-                        일시정지 중입니다. 재개하면 이어서 작성할 수 있습니다.
+                    <div className="flex flex-wrap items-center gap-1.5 mb-3" title="답안에 각 논점과 관련된 표현이 들어갔는지 대략 표시합니다">
+                      <span className="text-xs font-bold text-slate-500 mr-1">논점 체크</span>
+                      {coverage.map((q) => (
+                        <span key={q.id} className={`text-xs font-bold px-2.5 py-1 rounded-md ${q.hit ? 'bg-emerald-50 text-emerald-700' : 'bg-slate-100 text-slate-400'}`}>
+                          {q.hit ? '✓' : '○'} {q.id}. {q.label}
+                        </span>
+                      ))}
+                    </div>
+
+                    {showOutline && (
+                      <div className="mb-3">
+                        <textarea
+                          value={session.outline}
+                          onChange={(e) => updateSession({ outline: e.target.value })}
+                          placeholder="개요를 먼저 짜면 논점 누락을 줄일 수 있습니다."
+                          className="w-full h-32 p-4 bg-amber-50/70 border border-amber-200 rounded-lg resize-none outline-none focus:border-amber-400 text-sm leading-relaxed custom-scrollbar"
+                        />
+                        {!session.outline.trim() && (
+                          <button onClick={() => updateSession({ outline: outlineTemplate(session.exam) })} className="text-xs font-bold text-amber-700 mt-1">
+                            + 배점 항목으로 개요 틀 채우기
+                          </button>
+                        )}
                       </div>
                     )}
-                  </div>
 
-                  <div className="flex flex-col sm:flex-row justify-between items-center gap-4">
-                    <div className="flex gap-4 text-sm font-semibold bg-slate-50 px-5 py-3 rounded-xl border border-slate-100 w-full sm:w-auto justify-center">
-                      <span className="text-slate-500">포함 <span className="text-slate-800 ml-1">{charTotal}</span></span>
-                      <span className="w-px bg-slate-300"></span>
-                      <span className="text-slate-500">제외 <span className={`ml-1 ${charNoSpace < 1000 ? 'text-rose-500' : 'text-emerald-600'}`}>{charNoSpace}</span></span>
-                      <span className="w-px bg-slate-300"></span>
-                      <span className="text-slate-400">자동 저장됨</span>
+                    <div className="relative flex-grow flex min-h-0">
+                      <textarea
+                        value={answer}
+                        onChange={(e) => updateSession({ answer: e.target.value })}
+                        disabled={session.paused}
+                        aria-label="답안"
+                        placeholder={"서론 - 논점별 본론 - 결론 순서로, 현장 교사의 관점에서 구체적으로 작성해주세요.\n(권장 분량: 공백 제외 1,000자 이상)"}
+                        className="answer-sheet flex-grow w-full px-5 py-6 border border-slate-300 rounded-md resize-none focus:border-[#1E3A8A] focus:ring-4 focus:ring-indigo-50 outline-none text-base md:text-lg leading-[2] md:leading-[2] placeholder-slate-400 custom-scrollbar"
+                        spellCheck={false}
+                      />
+                      {session.paused && (
+                        <div className="absolute inset-0 rounded-md bg-white/85 flex items-center justify-center font-bold text-slate-600 px-6 text-center break-keep">
+                          일시정지 중입니다. 재개하면 이어서 작성할 수 있습니다.
+                        </div>
+                      )}
                     </div>
-                    <button onClick={() => handleSubmit(false)} className="w-full sm:w-auto bg-slate-800 hover:bg-slate-900 text-white font-bold text-lg py-3 px-10 rounded-xl shadow-md">
-                      최종 제출하기
-                    </button>
+
+                    <div className="mt-4 flex flex-col sm:flex-row justify-between items-stretch sm:items-center gap-3">
+                      <div className="flex items-center justify-center gap-4 text-sm font-semibold text-slate-500">
+                        <span>포함 <b className="text-slate-800 ml-1">{charTotal}</b></span>
+                        <span className="w-px h-4 bg-slate-300"></span>
+                        <span>제외 <b className={`ml-1 ${charNoSpace < 1000 ? 'text-rose-500' : 'text-emerald-600'}`}>{charNoSpace}</b><span className="text-slate-400"> / 1,000</span></span>
+                        <span className="w-px h-4 bg-slate-300"></span>
+                        <span className="text-slate-400">자동 저장됨</span>
+                      </div>
+                      <button onClick={() => handleSubmit(false)} className="h-12 px-8 rounded-xl bg-[#1E3A8A] hover:bg-[#1a3278] text-white text-lg font-extrabold flex items-center justify-center gap-2 shadow-[0_10px_24px_-10px_rgba(30,58,138,.8)]">
+                        답안 제출 <span aria-hidden="true">→</span>
+                      </button>
+                    </div>
                   </div>
-                </Card>
+                </div>
               </div>
             )}
 
