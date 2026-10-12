@@ -371,10 +371,6 @@
     function HistoryPanel({ history, onOpen, onClear }) {
       const stats = useMemo(() => {
         if (!history.length) return null;
-        const pct = (h) => (h.total / h.maxTotal) * 100;
-        const avg = history.reduce((s, h) => s + pct(h), 0) / history.length;
-        const recent = history.slice(0, 5);
-        const recentAvg = recent.reduce((s, h) => s + pct(h), 0) / recent.length;
         const byCat = {};
         history.forEach((h) => h.items.forEach((i) => {
           byCat[i.category] = byCat[i.category] || { earned: 0, max: 0, n: 0 };
@@ -385,28 +381,24 @@
         const cats = Object.entries(byCat)
           .map(([name, v]) => ({ name, rate: Math.round((v.earned / v.max) * 100), n: v.n }))
           .sort((a, b) => a.rate - b.rate);
-        return { avg: Math.round(avg), recentAvg: Math.round(recentAvg), cats };
+        return { cats };
       }, [history]);
 
       if (!history.length) {
         return (
-          <Card className="p-6 md:p-8 w-full max-w-2xl mx-auto text-center text-slate-500">
+          <Card className="p-6 md:p-8 w-full max-w-6xl mx-auto text-center text-slate-500">
             아직 응시 기록이 없습니다. 첫 모의고사를 풀면 논점 영역별 약점이 여기에 정리됩니다.
           </Card>
         );
       }
 
       return (
-        <Card className="p-6 md:p-8 w-full max-w-2xl mx-auto space-y-8">
+        <Card className="p-6 md:p-8 w-full max-w-6xl mx-auto space-y-6">
           <div className="flex justify-between items-center">
             <h2 className="text-lg font-extrabold text-slate-800">나의 학습 기록</h2>
             <button onClick={onClear} className="text-xs font-bold text-slate-400 hover:text-rose-500">기록 삭제</button>
           </div>
-          <div className="grid grid-cols-3 gap-3 text-center">
-            <div className="bg-slate-50 rounded-2xl p-4"><div className="text-2xl font-black">{history.length}</div><div className="text-xs text-slate-500 font-bold mt-1">응시 횟수</div></div>
-            <div className="bg-slate-50 rounded-2xl p-4"><div className="text-2xl font-black">{stats.avg}%</div><div className="text-xs text-slate-500 font-bold mt-1">전체 평균</div></div>
-            <div className="bg-slate-50 rounded-2xl p-4"><div className="text-2xl font-black">{stats.recentAvg}%</div><div className="text-xs text-slate-500 font-bold mt-1">최근 5회</div></div>
-          </div>
+          <div className="grid md:grid-cols-2 gap-8 md:gap-10">
           <div>
             <h3 className="font-bold text-slate-700 mb-3">논점 영역별 득점률 <span className="text-xs text-slate-400 font-medium">(낮은 순)</span></h3>
             <div className="space-y-2">
@@ -437,7 +429,175 @@
               ))}
             </ul>
           </div>
+          </div>
         </Card>
+      );
+    }
+
+    // --- [메인 화면: 실전 시험지형] ---
+    const timeLabel = (o) => o.label.replace(' (실전)', ' 실전').replace('시간 제한 없음', '제한 없음');
+
+    const summarize = (history) => {
+      if (!history.length) return null;
+      const pct = (h) => (h.total / h.maxTotal) * 100;
+      const avgOf = (list) => list.reduce((s, h) => s + pct(h), 0) / list.length;
+      const recent = history.slice(0, 5);
+      const previous = history.slice(5, 10);
+      const byCat = {};
+      history.forEach((h) => h.items.forEach((i) => {
+        byCat[i.category] = byCat[i.category] || { earned: 0, max: 0 };
+        byCat[i.category].earned += i.earned;
+        byCat[i.category].max += i.max;
+      }));
+      const weakest = Object.entries(byCat)
+        .map(([name, v]) => ({ name, rate: Math.round((v.earned / v.max) * 100) }))
+        .sort((a, b) => a.rate - b.rate)[0];
+      return {
+        count: history.length,
+        recentAvg: Math.round(avgOf(recent)),
+        delta: previous.length ? Math.round(avgOf(recent) - avgOf(previous)) : null,
+        weakest,
+      };
+    };
+
+    function PaperPreview({ topic, duration }) {
+      return (
+        <div className="relative hidden md:block">
+          <div className="relative bg-white rounded-md border border-slate-300 shadow-[0_30px_60px_-20px_rgba(15,23,42,.35)] rotate-[1.5deg] p-7">
+            <div className="flex justify-between items-start border-b-2 border-slate-900 pb-3 gap-4">
+              <div>
+                <p className="text-xs font-bold text-slate-500">초등 임용 1차 실전 모의평가</p>
+                <p className="text-2xl font-black tracking-tight mt-1">제1교시 교직논술</p>
+              </div>
+              <div className="grid grid-cols-2 text-[11px] border border-slate-900 shrink-0">
+                <span className="px-2 py-1 border-r border-b border-slate-900 font-bold">성명</span><span className="px-6 py-1 border-b border-slate-900"></span>
+                <span className="px-2 py-1 border-r border-slate-900 font-bold">수험번호</span><span className="px-6 py-1"></span>
+              </div>
+            </div>
+            <p className="mt-4 text-[15px] leading-7 break-keep">
+              <b>문제</b> 다음은 ○○초등학교 교사 협의회 대화의 일부이다. 이를 바탕으로{' '}
+              <u className="decoration-primary decoration-2 underline-offset-4">'{topic || '오늘의 논제'}'</u>에 대하여 논하시오. <b>[총 20점]</b>
+            </p>
+            <div className="mt-4 border border-slate-300 p-4 space-y-3" aria-hidden="true">
+              {['김 교사', '', '박 교사', '', '이 교사'].map((who, i) => (
+                <div key={i} className="flex gap-2 items-center">
+                  <b className="text-xs w-12 shrink-0">{who}</b>
+                  <div className={`h-2 rounded bg-slate-200 ${who ? 'flex-1' : i === 1 ? 'w-2/3' : 'w-4/5'}`}></div>
+                </div>
+              ))}
+            </div>
+            <div className="mt-4 bg-slate-50 border border-slate-200 p-3 text-xs space-y-1.5">
+              <p className="font-bold">• 논술의 내용 [총 15점]</p>
+              <div className="flex justify-between"><span>- 운영상의 문제점 2가지</span><b>[3점]</b></div>
+              <div className="flex justify-between"><span>- 개선을 위한 수업 방안 2가지</span><b>[4점]</b></div>
+              <div className="flex justify-between"><span>- 평가 방안 2가지와 피드백 1가지</span><b>[4점]</b></div>
+            </div>
+          </div>
+          <div className="absolute -left-8 -bottom-8 bg-slate-900 text-white rounded-2xl px-5 py-3 shadow-xl -rotate-2">
+            <p className="text-[11px] text-slate-400 font-bold">남은 시간</p>
+            <p className="font-mono text-3xl font-black tracking-wider">{duration ? formatTime(duration) : '∞'}</p>
+          </div>
+          <div className="absolute -right-3 -top-5 bg-white border border-slate-200 rounded-2xl px-4 py-3 shadow-lg rotate-3">
+            <p className="text-[11px] text-slate-500 font-bold">논점 체크</p>
+            <p className="text-sm font-bold"><span className="text-emerald-600">✓ 1</span> · <span className="text-emerald-600">✓ 2</span> · <span className="text-slate-300">○ 3</span></p>
+          </div>
+        </div>
+      );
+    }
+
+    function HomeScreen({ topic, setTopic, duration, setDuration, onRandom, onStart, history, dday, onSettings }) {
+      const summary = useMemo(() => summarize(history), [history]);
+      return (
+        <div>
+          <nav className="max-w-6xl mx-auto h-14 flex items-center justify-between gap-3">
+            <div className="flex items-center gap-2.5 min-w-0">
+              <img src="icons/icon-192.png" alt="" className="w-8 h-8 rounded-lg" />
+              <span className="font-extrabold tracking-tight whitespace-nowrap">엽쌤스쿨</span>
+              <span className="hidden sm:inline text-slate-300">|</span>
+              <h1 className="sr-only sm:not-sr-only text-slate-600 font-semibold truncate">초등교직논술 모의고사</h1>
+            </div>
+            <div className="flex items-center gap-2 text-sm font-bold shrink-0">
+              {dday && <span className="px-2.5 py-1 rounded-md bg-rose-100 text-rose-700">{dday}</span>}
+              <button type="button" data-ys-install className="hidden sm:inline px-3 py-1.5 rounded-lg border border-slate-300 bg-white hover:bg-indigo-50 whitespace-nowrap">📲 앱 설치</button>
+              <button type="button" data-qr aria-label="QR 코드로 접속" className="px-3 py-1.5 rounded-lg border border-slate-300 bg-white hover:bg-indigo-50">QR</button>
+              <button type="button" onClick={onSettings} aria-label="설정" className="p-2 rounded-lg text-slate-500 hover:text-primary hover:bg-indigo-50">
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
+              </button>
+            </div>
+          </nav>
+
+          <div className="max-w-6xl mx-auto pt-6 md:pt-12 pb-10 grid grid-cols-1 lg:grid-cols-[1.05fr_0.95fr] gap-10 lg:gap-14 items-center">
+            <section className="min-w-0">
+              <p className="inline-flex items-center gap-2 text-[13px] font-bold text-[#1E3A8A] bg-indigo-100 px-3 py-1 rounded-full">
+                <span className="w-1.5 h-1.5 rounded-full bg-[#1E3A8A]"></span> 초등 임용 1차 · 교직논술 실전 대비
+              </p>
+              <h2 className="mt-5 text-[34px] leading-[1.25] md:text-[52px] md:leading-[1.18] font-black tracking-[-0.03em] text-slate-900 break-keep">
+                실전처럼 쓰고,<br /><span className="text-[#1E3A8A]">논점</span>으로 점검한다.
+              </h2>
+              <p className="mt-5 text-[17px] md:text-lg text-slate-600 leading-relaxed max-w-[34rem] break-keep">
+                교육 키워드 하나로 실전 모의고사를 시작하세요. 배점표 기준으로 논점 누락을 짚고, 영역별 약점을 기록합니다.
+              </p>
+
+              <div className="mt-8 bg-white rounded-2xl border border-slate-200 shadow-[0_1px_0_#e2e8f0,0_12px_32px_-12px_rgba(15,23,42,.18)] p-4 md:p-5">
+                <label htmlFor="topic" className="block text-xs font-bold text-slate-500 mb-2">오늘의 논제 <span className="font-medium text-slate-400">· 비우면 무작위로 출제</span></label>
+                <div className="flex gap-2">
+                  <input
+                    id="topic"
+                    type="text"
+                    value={topic}
+                    onChange={(e) => setTopic(e.target.value)}
+                    onKeyDown={(e) => e.key === 'Enter' && onStart()}
+                    placeholder="예: 학생 주도성"
+                    className="flex-1 min-w-0 h-14 px-4 rounded-xl bg-slate-50 border border-slate-200 text-lg font-bold outline-none focus:border-primary focus:ring-4 focus:ring-indigo-100 placeholder:font-medium placeholder-slate-400"
+                  />
+                  <button type="button" onClick={onRandom} className="h-14 px-4 rounded-xl border border-slate-200 bg-white hover:bg-indigo-50 font-bold text-slate-700 whitespace-nowrap">🎲 랜덤</button>
+                </div>
+                <div className="mt-3 flex flex-wrap gap-1.5 text-sm font-bold" role="radiogroup" aria-label="시험 시간">
+                  {TIME_OPTIONS.map((o) => (
+                    <button
+                      key={o.value}
+                      type="button"
+                      role="radio"
+                      aria-checked={duration === o.value}
+                      onClick={() => setDuration(o.value)}
+                      className={`px-3 py-1.5 rounded-lg ${duration === o.value ? 'bg-slate-900 text-white' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'}`}
+                    >
+                      {timeLabel(o)}
+                    </button>
+                  ))}
+                </div>
+                <button type="button" onClick={onStart} className="mt-4 w-full h-14 rounded-xl bg-[#1E3A8A] hover:bg-[#1a3278] text-white text-lg font-extrabold flex items-center justify-center gap-2 shadow-[0_10px_24px_-10px_rgba(30,58,138,.8)] transition-transform hover:-translate-y-0.5">
+                  모의고사 시작하기 <span aria-hidden="true">→</span>
+                </button>
+              </div>
+              <ul className="mt-5 flex flex-wrap gap-x-5 gap-y-2 text-sm text-slate-500 font-semibold">
+                <li>✓ 회원가입 없이 바로</li><li>✓ 학교망에서도 동작</li><li>✓ 기록은 내 기기에만 저장</li>
+              </ul>
+            </section>
+            <PaperPreview topic={topic.trim()} duration={duration} />
+          </div>
+
+          {summary && (
+            <div className="max-w-6xl mx-auto mb-6 grid sm:grid-cols-3 bg-white rounded-2xl border border-slate-200 divide-y sm:divide-y-0 sm:divide-x divide-slate-200">
+              <div className="p-5"><p className="text-xs font-bold text-slate-500">응시</p><p className="mt-1 text-3xl font-black">{summary.count}<span className="text-base text-slate-400 font-bold ml-1">회</span></p></div>
+              <div className="p-5">
+                <p className="text-xs font-bold text-slate-500">최근 5회 평균</p>
+                <p className="mt-1 text-3xl font-black">
+                  {summary.recentAvg}<span className="text-base text-slate-400 font-bold ml-1">%</span>
+                  {summary.delta != null && summary.delta !== 0 && (
+                    <span className={`ml-2 text-sm font-bold ${summary.delta > 0 ? 'text-emerald-600' : 'text-rose-500'}`}>{summary.delta > 0 ? '▲' : '▼'} {Math.abs(summary.delta)}</span>
+                  )}
+                </p>
+              </div>
+              <div className="p-5">
+                <p className="text-xs font-bold text-slate-500">집중 보완 영역</p>
+                {summary.weakest
+                  ? <p className="mt-1 text-lg font-black text-rose-700 break-keep">{summary.weakest.name} <span className="text-slate-400 text-base">{summary.weakest.rate}%</span></p>
+                  : <p className="mt-1 text-lg font-black text-slate-400">-</p>}
+              </div>
+            </div>
+          )}
+        </div>
       );
     }
 
@@ -749,7 +909,7 @@
       const dday = dDay(settings.examDate);
 
       return (
-        <div className="min-h-screen p-4 md:p-8 flex flex-col items-center justify-between">
+        <div className={`min-h-screen p-4 md:p-8 flex flex-col items-center justify-between ${status === 'setup' ? 'bg-[#f6f5f1]' : ''}`}>
           <Toasts toasts={toasts} />
           {showSettings && (
             <SettingsModal
@@ -759,12 +919,13 @@
             />
           )}
           <div className="w-full max-w-7xl space-y-6 flex-grow">
-            {status !== 'exam' && (
+            {status === 'result' && (
               <div className="flex justify-end gap-2 -mb-3">
                 <button type="button" data-ys-install className="px-3 py-1.5 rounded-xl bg-primary hover:bg-primaryHover text-white text-sm font-bold whitespace-nowrap shadow-sm">📲 앱 설치</button>
                 <button type="button" data-qr aria-label="QR 코드로 접속" className="px-3 py-1.5 rounded-xl bg-white border border-slate-200 hover:bg-indigo-50 text-slate-700 text-sm font-bold whitespace-nowrap shadow-sm">📱 QR</button>
               </div>
             )}
+            {status !== 'setup' && (
             <header className="bg-surface py-5 px-4 md:px-8 rounded-2xl shadow-sm border border-slate-100 flex items-center justify-between gap-2">
               <div className="w-24 md:w-32">
                 {(status === 'exam' || status === 'result') && (
@@ -789,41 +950,22 @@
                 )}
               </div>
             </header>
+            )}
 
             {/* 1. 설정 화면 */}
             {status === 'setup' && (
-              <div className="space-y-6 mt-8">
-                <Card className="p-8 md:p-12 flex flex-col items-center text-center gap-8 w-full max-w-2xl mx-auto">
-                  <div className="w-full text-left space-y-3">
-                    <div className="flex justify-between items-end mb-2">
-                      <label className="block text-lg font-bold text-slate-700">어떤 주제로 연습할까요?</label>
-                      <button onClick={() => setTopic(pick(EDUCATIONAL_KEYWORDS))} className="flex items-center gap-1.5 text-sm font-bold text-primary bg-indigo-50 hover:bg-indigo-100 px-3 py-1.5 rounded-lg">
-                        <span>🎲</span> 랜덤 키워드
-                      </button>
-                    </div>
-                    <input
-                      type="text"
-                      value={topic}
-                      onChange={(e) => setTopic(e.target.value)}
-                      placeholder="예: 학생 주도성, 늘봄학교, 기초학력 등 (비우면 무작위)"
-                      className="w-full p-5 bg-slate-50 border border-slate-200 rounded-2xl focus:ring-4 focus:ring-indigo-100 focus:border-primary outline-none text-lg placeholder-slate-400"
-                      onKeyDown={(e) => e.key === 'Enter' && handleStartExam()}
-                    />
-                  </div>
-                  <label className="w-full block text-left">
-                    <span className="block text-sm font-bold text-slate-600 mb-2">시험 시간</span>
-                    <select
-                      value={settings.duration}
-                      onChange={(e) => setSettings({ ...settings, duration: Number(e.target.value) })}
-                      className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:border-primary"
-                    >
-                      {TIME_OPTIONS.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
-                    </select>
-                  </label>
-                  <button onClick={handleStartExam} className="w-full md:w-auto bg-primary hover:bg-primaryHover text-white font-bold text-lg md:text-xl py-5 px-16 rounded-2xl shadow-lg shadow-indigo-200 transition-all transform hover:-translate-y-1">
-                    모의고사 시작하기
-                  </button>
-                </Card>
+              <div>
+                <HomeScreen
+                  topic={topic}
+                  setTopic={setTopic}
+                  duration={settings.duration}
+                  setDuration={(d) => setSettings({ ...settings, duration: d })}
+                  onRandom={() => setTopic(pick(EDUCATIONAL_KEYWORDS))}
+                  onStart={handleStartExam}
+                  history={history}
+                  dday={dday}
+                  onSettings={() => setShowSettings(true)}
+                />
                 <HistoryPanel
                   history={history}
                   onOpen={(h) => { setViewEntry(h); setStatus('result'); }}
